@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{ post.judul }} - Gulmaify</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* ... semua CSS sama persis seperti yang Anda berikan, tidak diubah ... */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--g1:#142C14;--g2:#2D5128;--g3:#537B2F;--g4:#8DA750;--g5:#E4EB9C;--cream:#FFFAF0;--cream2:#F2F4F5;--gold:#FFB800;--rust:#FF6D2D;--dark:#0b1f0c;--serif:'DM Serif Display','Fraunces',Georgia,serif;--sans:'Instrument Sans','Quicksand',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--cream);color:var(--g1);overflow-x:hidden}
+@media (pointer: fine){
+  #cursor{
+    position:fixed;
+    width:12px;
+    height:12px;
+    background:var(--g3);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:transform .15s,width .2s,height .2s,background .2s;
+    mix-blend-mode:multiply;
+  }
+
+  #cursor-ring{
+    position:fixed;
+    width:36px;
+    height:36px;
+    border:1.5px solid var(--g2);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9998;
+    transform:translate(-50%,-50%);
+    transition:transform .35s cubic-bezier(.25,.46,.45,.94),width .3s,height .3s,border-color .3s;
+  }
+}
+@media (pointer: coarse){
+  #cursor,
+  #cursor-ring{
+    display:none;
+  }
+}
+nav{position:fixed;top:0;left:0;right:0;z-index:500;height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 4%;background:rgba(255,250,240,0.95);backdrop-filter:blur(16px);border-bottom:2px solid rgba(83,123,47,0.2);box-shadow:0 2px 12px rgba(20,44,20,0.08);transition:all .2s}
+nav.scrolled{background:rgba(255,250,240,0.98);border-bottom-color:rgba(83,123,47,0.25)}
+.nav-logo{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--g1);text-decoration:none;letter-spacing:-0.03em}
+.nav-logo em{font-style:italic;color:var(--g3)}
+.nav-links{display:flex;gap:2rem;list-style:none;align-items:center}
+.nav-links a{font-size:0.85rem;color:var(--g2);text-decoration:none;font-weight:500;transition:color .2s;padding:6px 0;border-bottom:2px solid transparent}
+.nav-links a:hover{color:var(--g3)}
+.nav-links a.active{color:var(--g3);border-bottom-color:var(--g3)}
+.profile-wrap{position:relative}
+.profile-btn{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 12px;border-radius:30px;border:2px solid rgba(83,123,47,0.3);background:transparent;font-family:var(--sans);font-size:.82rem;font-weight:600;color:var(--g2);box-shadow:#537B2F 3px 3px 0 0;transition:all .15s}
+.profile-btn:hover{background:#E4EB9C}
+.profile-btn:active{box-shadow:#537B2F 1px 1px 0 0;transform:translate(2px,2px)}
+.profile-btn img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.profile-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g2));display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700}
+.profile-dropdown{position:absolute;top:calc(100% + 10px);right:0;background:#fff;border:2px solid rgba(83,123,47,0.2);border-radius:20px;box-shadow:0 8px 32px rgba(20,44,20,0.15);min-width:180px;overflow:hidden;display:none;z-index:600}
+.profile-dropdown.show{display:block}
+.profile-dropdown a{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--g1);text-decoration:none;font-size:.85rem;font-weight:500;transition:background .15s}
+.profile-dropdown a:hover{background:var(--cream2)}
+.profile-dropdown .logout-link{color:#dc3545;border-top:1px solid rgba(83,123,47,.1)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;border:none;background:transparent;z-index:600}
+.hamburger span{display:block;width:24px;height:2px;background:var(--g1);border-radius:2px;transition:all .3s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mobile-menu{position:fixed;top:0;right:-280px;width:280px;height:100%;background:#fff;z-index:1000;padding:70px 20px 20px;transition:right .3s ease;box-shadow:-5px 0 20px rgba(0,0,0,0.1);display:flex;flex-direction:column;gap:.5rem}
+.mobile-menu.show{right:0}
+.mobile-menu a{display:flex;align-items:center;gap:12px;padding:14px 16px;color:var(--g1);font-weight:600;border-radius:16px;transition:background .2s;text-decoration:none;font-size:1rem}
+.mobile-menu a:hover{background:var(--cream)}
+.mobile-menu a.active{background:var(--g5);color:var(--g2)}
+.mobile-menu hr{margin:12px 0;border:none;border-top:1px solid #e0e8e2}
+.menu-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;display:none}
+.menu-overlay.show{display:block}
+.btn-primary{background:linear-gradient(135deg,#537B2F,#2D5128);border:2px solid #142C14;border-radius:30px;box-shadow:#142C14 4px 4px 0 0;color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:.9rem;padding:10px 22px;text-decoration:none;transition:all .15s;font-family:var(--sans)}
+.btn-primary:hover{background:linear-gradient(135deg,#8DA750,#537B2F);box-shadow:#142C14 4px 4px 0 0;transform:translateY(-2px)}
+.btn-primary:active{box-shadow:#142C14 2px 2px 0 0;transform:translate(2px,2px)}
+.detail-container{max-width:1000px;margin:0 auto;padding:86px 4% 60px}
+.back-link{display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;color:var(--g3);text-decoration:none;font-weight:600;font-size:0.9rem;background:rgba(83,123,47,0.08);padding:8px 16px;border-radius:30px;border:1.5px solid rgba(83,123,47,0.2);transition:all .15s}
+.back-link:hover{background:#E4EB9C}
+.img-gallery{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.img-card{flex:1;min-width:200px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 16px rgba(20,44,20,0.1);border:2px solid rgba(83,123,47,0.1)}
+.img-card-header{padding:12px 16px;background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff;font-size:0.8rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.img-card img{width:100%;height:auto;display:block}
+.location-section{background:#fff;border-radius:24px;padding:20px;margin-bottom:24px;box-shadow:0 4px 16px rgba(20,44,20,0.08);border:2px solid rgba(83,123,47,0.1)}
+.location-section h3{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--g1);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.location-section .loc-meta{font-size:0.8rem;color:#5a7a5c;margin-bottom:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.loc-badge{background:#e8f2e5;color:var(--g3);padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:600}
+#detail-map{height:280px;border-radius:16px;overflow:hidden;border:2px solid rgba(83,123,47,0.15)}
+.loc-address{background:linear-gradient(135deg,#f0faf0,#e8f5e0);border-radius:14px;padding:12px 16px;margin-top:14px;font-size:0.82rem;color:var(--g2);line-height:1.6;border:1.5px solid rgba(83,123,47,0.15)}
+.loc-address strong{color:var(--g1);font-size:0.88rem;display:block;margin-bottom:4px}
+.multiple-gulma{margin:20px 0}
+.multiple-gulma h3{font-family:var(--serif);font-size:1.2rem;margin-bottom:12px}
+.gulma-list-item{background:#f8faf5;border-radius:16px;padding:12px 16px;margin-bottom:12px;border:1px solid rgba(83,123,47,0.15)}
+.gulma-name{font-weight:700;color:var(--g1);margin-bottom:4px}
+.gulma-conf{font-size:0.75rem;color:var(--g3)}
+.gulma-card{background:#fff;border-radius:24px;padding:24px;margin-bottom:24px;box-shadow:0 4px 20px rgba(20,44,20,0.08);border:2px solid rgba(83,123,47,0.1)}
+.gulma-card-header{background:linear-gradient(135deg,#f0faf0,#e8f5e0);border-radius:16px;padding:16px 20px;margin-bottom:20px;border:1.5px solid rgba(83,123,47,0.15)}
+.gulma-title{font-family:var(--serif);font-size:1.5rem;color:var(--g1);font-weight:900;margin-bottom:4px}
+.gulma-latin{font-style:italic;color:#7a9c7e;font-size:0.9rem;margin-bottom:12px}
+.conf-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--g3),var(--g4));color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;box-shadow:0 2px 8px rgba(83,123,47,0.3)}
+.info-section{margin:16px 0}
+.info-section h3{font-size:0.95rem;font-weight:700;color:var(--g2);margin-bottom:10px;padding:8px 14px;background:linear-gradient(135deg,rgba(83,123,47,0.08),rgba(141,167,80,0.05));border-radius:10px;border-left:4px solid var(--g3);display:flex;align-items:center;gap:8px}
+.info-section p{font-size:0.85rem;color:#4a6b4c;line-height:1.7;padding:0 4px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.karakter-item{background:linear-gradient(135deg,#f8fcf0,#f0faf0);padding:12px 16px;border-radius:14px;border:1.5px solid rgba(83,123,47,0.1)}
+.karakter-label{font-size:0.68rem;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.karakter-val{font-size:0.85rem;color:var(--g1);font-weight:500}
+.comment-section{margin-top:40px;background:#fff;border-radius:24px;padding:24px;box-shadow:0 4px 20px rgba(20,44,20,0.08);border:2px solid rgba(83,123,47,0.1)}
+.comment-section h3{font-family:var(--serif);font-size:1.4rem;margin-bottom:20px}
+.comment-list{display:flex;flex-direction:column;gap:20px}
+.comment-item{background:#fff;border-radius:20px;padding:18px;border:1px solid #e0e8e2}
+.comment-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.comment-user{font-weight:700;color:var(--g1)}
+.comment-date{font-size:.7rem;color:#9ab09e}
+.comment-text{color:#5a7a5c;line-height:1.6}
+.comment-input-wrapper{border:1.5px solid #d4e8d6;border-radius:18px;background:#fff;overflow:hidden;margin-bottom:20px}
+.comment-input-wrapper textarea{width:100%;border:none;outline:none;resize:none;padding:12px;font-family:var(--sans);font-size:0.9rem}
+.comment-toolbar{display:flex;justify-content:flex-end;padding:8px;border-top:1px solid #eaf2ec}
+.send-comment-btn{background:var(--g3);color:#fff;border:none;padding:6px 20px;border-radius:40px;cursor:pointer;font-weight:600;transition:background 0.2s}
+.send-comment-btn:hover{background:var(--g2)}
+.delete-comment-btn{background:none;border:none;cursor:pointer;color:#aaa;font-size:0.75rem;margin-top:6px}
+.delete-comment-btn:hover{color:#e53e3e}
+.empty-comments{color:#7a9c7e;text-align:center;padding:20px}
+@media(max-width:768px){
+  .hamburger{display:flex}
+  .nav-links{display:none}
+  .grid-2{grid-template-columns:1fr}
+  .img-gallery{flex-direction:column}
+  .detail-container{padding-top:80px}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('beranda') }}">Beranda</a>
+  <a href="{{ url_for('kamera') }}">Identifikasi</a>
+  <a href="{{ url_for('riwayat') }}">Riwayat</a>
+  <a href="{{ url_for('forum') }}" class="active">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_logout') }}">Keluar</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<nav id="navbar">
+  <a href="{{ url_for('beranda') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('beranda') }}">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}">Identifikasi</a></li>
+    <li><a href="{{ url_for('riwayat') }}">Riwayat</a></li>
+    <li><a href="{{ url_for('forum') }}" class="active">Forum</a></li>
+    <li>
+      <div class="profile-wrap">
+        <button class="profile-btn" onclick="toggleProfile(event)">
+          {% if session.get('user_foto') %}
+          <img src="{{ session.get('user_foto') }}" alt="foto">
+          {% else %}
+          <div class="profile-avatar">{{ session.get('user_nama','U')[0]|upper }}</div>
+          {% endif %}
+          {{ session.get('user_nama','').split(' ')[0] }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <a href="{{ url_for('riwayat') }}">Riwayat Saya</a>
+          <a href="{{ url_for('user_logout') }}" class="logout-link">Keluar</a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="detail-container">
+  <a href="{{ url_for('forum') }}" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Kembali ke Forum
+  </a>
+
+  <div class="img-gallery">
+    {% if post.foto_upload %}
+    <div class="img-card">
+      <div class="img-card-header">Foto Asli</div>
+      <img src="{{ url_for('static', filename='uploads/' + post.foto_upload) }}" alt="Foto asli">
+    </div>
+    {% endif %}
+    {% if post.foto_annotasi %}
+    <div class="img-card">
+      <div class="img-card-header">Hasil Anotasi AI</div>
+      <img src="{{ url_for('static', filename='uploads/' + post.foto_annotasi) }}" alt="Hasil anotasi">
+    </div>
+    {% endif %}
+    {% if post.foto_post and not post.foto_upload %}
+    <div class="img-card">
+      <div class="img-card-header">Foto Postingan</div>
+      <img src="{{ url_for('static', filename='uploads/' + post.foto_post) }}" alt="Foto postingan">
+    </div>
+    {% endif %}
+  </div>
+
+  {% if post.lokasi_lat and post.lokasi_lng %}
+  <div class="location-section">
+    <h3>Lokasi Penemuan</h3>
+    <div class="loc-meta">
+      {% if post.lokasi_kota %}<span class="loc-badge">{{ post.lokasi_kota }}</span>{% endif %}
+      {% if post.lokasi_provinsi %}<span class="loc-badge">{{ post.lokasi_provinsi }}</span>{% endif %}
+      <span style="font-size:0.75rem;color:#9ab09e">{{ post.lokasi_lat|round(6) }}, {{ post.lokasi_lng|round(6) }}</span>
+    </div>
+    <div id="detail-map"></div>
+    {% if post.lokasi_alamat %}
+    <div class="loc-address">
+      <strong>Alamat:</strong>
+      {{ post.lokasi_alamat }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# Tampilkan semua gulma dalam card penuh, baik 1 atau lebih #}
+  {% if deteksi_sesi %}
+    {% for gulma in deteksi_sesi %}
+    <div class="gulma-card">
+      <div class="gulma-card-header">
+        <div class="gulma-title">{{ gulma.nama_umum or gulma.label_ai|replace('_',' ') }}</div>
+        <div class="gulma-latin">{{ gulma.nama_latin or 'Nama latin belum tersedia' }}</div>
+        <span class="conf-badge">Confidence: {{ (gulma.confidence_score * 100)|round(1) }}%</span>
+      </div>
+
+      <div class="info-section"><h3>Deskripsi Umum</h3><p>{{ gulma.deskripsi_umum or 'Informasi belum tersedia.' }}</p></div>
+
+      <div class="info-section"><h3>Karakteristik</h3>
+        <div class="grid-2">
+          <div class="karakter-item"><div class="karakter-label">Bentuk Daun</div><div class="karakter-val">{{ gulma.bentuk_daun or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Warna Daun</div><div class="karakter-val">{{ gulma.warna_daun or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Batang</div><div class="karakter-val">{{ gulma.karakter_batang or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Akar</div><div class="karakter-val">{{ gulma.karakter_akar or '—' }}</div></div>
+        </div>
+      </div>
+
+      <div class="info-section"><h3>Cara Perkembangbiakan</h3><p>{{ gulma.cara_berkembangbiak or 'Informasi belum tersedia.' }}</p></div>
+
+      <div class="info-section"><h3>Metode Pengendalian</h3>
+        <div class="grid-2">
+          <div class="karakter-item"><div class="karakter-label">Waktu Terbaik</div><div class="karakter-val">{{ gulma.waktu_kendali_terbaik or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Mekanik</div><div class="karakter-val">{{ gulma.metode_mekanik or '—' }}</div></div>
+          <div class="karakter-item" style="grid-column:1/-1"><div class="karakter-label">Kimiawi</div><div class="karakter-val">{{ gulma.metode_kimiawi or '—' }}</div></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  {% elif post.label_ai %}
+  {# Fallback jika tidak ada deteksi_sesi tapi post memiliki label_ai #}
+  <div class="gulma-card">
+    <div class="gulma-card-header">
+      <div class="gulma-title">{{ post.nama_umum or post.label_ai|replace('_',' ') }}</div>
+      <div class="gulma-latin">{{ post.nama_latin or '-' }}</div>
+      <span class="conf-badge">Confidence: {{ (post.confidence_score * 100)|round(1) }}%</span>
+    </div>
+    <div class="info-section"><h3>Deskripsi Umum</h3><p>{{ post.deskripsi_umum or 'Informasi gulma belum tersedia.' }}</p></div>
+    <div class="info-section"><h3>Karakteristik</h3>
+      <div class="grid-2">
+        <div class="karakter-item"><div class="karakter-label">Bentuk Daun</div><div>{{ post.bentuk_daun or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Warna Daun</div><div>{{ post.warna_daun or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Batang</div><div>{{ post.karakter_batang or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Akar</div><div>{{ post.karakter_akar or '-' }}</div></div>
+      </div>
+    </div>
+    <div class="info-section"><h3>Cara Perkembangbiakan</h3><p>{{ post.cara_berkembangbiak or 'Informasi belum tersedia.' }}</p></div>
+    <div class="info-section"><h3>Pengendalian</h3>
+      <div class="grid-2">
+        <div class="karakter-item"><div class="karakter-label">Waktu Terbaik</div><div>{{ post.waktu_kendali_terbaik or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Metode Mekanik</div><div>{{ post.metode_mekanik or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Metode Kimiawi</div><div>{{ post.metode_kimiawi or '-' }}</div></div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  {# Postingan biasa tanpa deteksi #}
+  <div class="gulma-card">
+    <div class="gulma-card-header">
+      <div class="gulma-title">Diskusi Umum</div>
+      <div class="gulma-latin">-</div>
+    </div>
+    <div class="info-section"><h3>Deskripsi</h3><p>{{ post.deskripsi or 'Tidak ada deskripsi.' }}</p></div>
+  </div>
+  {% endif %}
+
+  <div class="comment-section">
+  <h3>Komentar ({{ comments|length }})</h3>
+    <form method="POST" action="{{ url_for('tambah_komentar', id_forum=post.id_forum) }}" enctype="multipart/form-data" id="formKomentar">
+      <div class="comment-input-wrapper">
+        <textarea name="isi_komentar" rows="2" placeholder="Tulis komentar Anda..." required></textarea>
+        <div class="comment-toolbar">
+          <label style="cursor:pointer; margin-right:12px; display:inline-flex; align-items:center; gap:4px; font-size:0.8rem; color:var(--g3)">
+            📷 Upload Foto
+            <input type="file" name="foto_komentar" id="inputFotoKomentar" accept="image/*" style="display:none">
+          </label>
+          <button type="submit" class="send-comment-btn">Kirim</button>
+        </div>
+      </div>
+      <!-- Preview DIPINDAH ke LUAR dari comment-input-wrapper agar tidak terpotong overflow:hidden -->
+      <div id="previewFotoContainer" style="margin-top:10px; display:none; padding:0 4px;">
+        <p style="font-size:0.75rem; color:var(--g3); margin-bottom:6px;">📎 Foto yang akan dikirim:</p>
+        <div style="position:relative; display:inline-block;">
+          <img id="previewFoto" src="#" alt="Preview foto" style="max-width:200px; max-height:150px; border-radius:12px; border:2px solid rgba(83,123,47,0.3); display:block;">
+          <button type="button" id="hapusFotoBtn" style="position:absolute; top:-8px; right:-8px; background:#dc3545; color:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:14px; line-height:24px; text-align:center;">✕</button>
+        </div>
+      </div>
+    </form>
+    <div class="comment-list">
+      {% for komentar in comments %}
+      <div class="comment-item" id="comment-{{ komentar.id_komentar }}">
+        <div class="comment-header">
+          {% if komentar.user_foto %}
+          <img src="{{ komentar.user_foto }}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">
+          {% else %}
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--g3);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">{{ komentar.user_nama[0]|upper }}</div>
+          {% endif %}
+          <div>
+            <span class="comment-user">{{ komentar.user_nama }}</span>
+            <span class="comment-date">{{ komentar.tgl_komentar.strftime('%d %b %Y, %H:%M') if komentar.tgl_komentar else '' }}</span>
+          </div>
+        </div>
+        <div class="comment-text">{{ komentar.isi_komentar }}</div>
+        {% if komentar.foto_komentar %}
+        <img src="{{ url_for('static', filename='uploads/' + komentar.foto_komentar) }}" style="max-width:200px;border-radius:12px;margin-top:8px">
+        {% endif %}
+        {% if session.user_logged_in and (session.user_id == komentar.user_id or session.get('admin_logged_in')) %}
+        <div>
+          <button class="delete-comment-btn" onclick="deleteComment({{ komentar.id_komentar }})">Hapus komentar</button>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="empty-comments">Belum ada komentar. Jadilah yang pertama!</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+  var hasLokasi = {{ 'true' if post.lokasi_lat and post.lokasi_lng else 'false' }};
+  var lat = {{ post.lokasi_lat if post.lokasi_lat else 'null' }};
+  var lng = {{ post.lokasi_lng if post.lokasi_lng else 'null' }};
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (hasLokasi && lat !== null && lng !== null) {
+      var map = L.map('detail-map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      var icon = L.divIcon({
+        html: '<div style="background:linear-gradient(135deg,#537B2F,#2D5128);width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,0.3)"><div style="transform:rotate(45deg);text-align:center;line-height:30px;font-size:14px">🌿</div></div>',
+        className: '',
+        iconSize: [36, 36],
+        iconAnchor: [18, 36]
+      });
+      L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup('Lokasi gulma ditemukan').openPopup();
+    }
+
+    // Preview foto komentar
+   // Preview foto komentar
+    const photoInput = document.getElementById('inputFotoKomentar');
+    const previewContainer = document.getElementById('previewFotoContainer');
+    const previewImg = document.getElementById('previewFoto');
+    const hapusBtn = document.getElementById('hapusFotoBtn');
+
+    photoInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(this.files[0]);
+      } else {
+        previewContainer.style.display = 'none';
+        previewImg.src = '#';
+      }
+    });
+
+    hapusBtn.addEventListener('click', function() {
+      photoInput.value = '';
+      previewContainer.style.display = 'none';
+      previewImg.src = '#';
+    });
+
+    var cur = document.getElementById('cursor');
+    var ring = document.getElementById('cursor-ring');
+    var mx = 0, my = 0, rx = 0, ry = 0;
+    if (cur && ring) {
+      document.addEventListener('mousemove', function(e) {
+        mx = e.clientX; my = e.clientY;
+        cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+      });
+      (function animRing() {
+        rx += (mx - rx) * 0.12;
+        ry += (my - ry) * 0.12;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(animRing);
+      })();
+      var elems = document.querySelectorAll('a,button,.back-link,.delete-comment-btn');
+      for (var i = 0; i < elems.length; i++) {
+        elems[i].addEventListener('mouseenter', function() {
+          cur.style.width = '20px'; cur.style.height = '20px';
+          ring.style.width = '54px'; ring.style.height = '54px';
+        });
+        elems[i].addEventListener('mouseleave', function() {
+          cur.style.width = '12px'; cur.style.height = '12px';
+          ring.style.width = '36px'; ring.style.height = '36px';
+        });
+      }
+    }
+
+    var navEl = document.getElementById('navbar');
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 40) navEl.classList.add('scrolled');
+      else navEl.classList.remove('scrolled');
+    });
+
+    var hamburger = document.getElementById('hamburger');
+    var mobileMenu = document.getElementById('mobileMenu');
+    var menuOverlay = document.getElementById('menuOverlay');
+    function openMenu() {
+      hamburger.classList.add('open');
+      mobileMenu.classList.add('show');
+      menuOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+      hamburger.classList.remove('open');
+      mobileMenu.classList.remove('show');
+      menuOverlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    hamburger.addEventListener('click', openMenu);
+    menuOverlay.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMenu(); });
+
+    window.toggleProfile = function(e) {
+      e.stopPropagation();
+      document.getElementById('profileDropdown').classList.toggle('show');
+    };
+    document.addEventListener('click', function() {
+      document.getElementById('profileDropdown').classList.remove('show');
+    });
+  });
+
+  window.deleteComment = function(commentId) {
+    if (confirm('Yakin ingin menghapus komentar ini?')) {
+      fetch('/hapus-komentar/' + commentId, { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.status === 'success') {
+            var el = document.getElementById('comment-' + commentId);
+            if (el) el.remove();
+          } else {
+            alert('Gagal menghapus komentar.');
+          }
+        })
+        .catch(function() { alert('Terjadi kesalahan.'); });
+    }
+  };
+})();
+</script>
+</body>
+</html>

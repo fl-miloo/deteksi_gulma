@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Riwayat - Gulmaify</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0
+}
+
+:root{
+  --g1:#142C14;
+  --g2:#2D5128;
+  --g3:#537B2F;
+  --g4:#8DA750;
+  --g5:#E4EB9C;
+  --cream:#FFFAF0;
+  --cream2:#F2F4F5;
+  --gold:#FFB800;
+  --rust:#FF6D2D;
+  --dark:#0b1f0c;
+  --serif:'DM Serif Display','Fraunces',Georgia,serif;
+  --sans:'Instrument Sans','Quicksand',system-ui,sans-serif;
+  --shadow-green:0 8px 20px rgba(20,44,20,0.12);
+  --shadow-3d:0 4px 0 0 #142C14;
+}
+html{ scroll-behavior:smooth }
+body{
+  font-family:var(--sans);
+  background:var(--cream);
+  color:var(--g1);
+  overflow-x:hidden
+}
+
+/* custom cursor desktop */
+@media (pointer: fine) {
+  #cursor{
+    position:fixed;
+    width:12px;
+    height:12px;
+    background:var(--g3);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:transform 0.15s,width 0.2s,height 0.2s,background 0.2s;
+    mix-blend-mode:multiply
+  }
+  #cursor-ring{
+    position:fixed;
+    width:36px;
+    height:36px;
+    border:1.5px solid var(--g2);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9998;
+    transform:translate(-50%,-50%);
+    transition:transform 0.35s cubic-bezier(.25,.46,.45,.94),width 0.3s,height 0.3s,border-color 0.3s
+  }
+}
+@media (pointer: coarse) { 
+  #cursor, #cursor-ring { display: none; } 
+}
+
+/* ===== NAVBAR (sama dengan beranda) ===== */
+nav{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:500;
+  height:66px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 4%;
+  background:rgba(255,250,240,0.95);
+  backdrop-filter:blur(16px);
+  border-bottom:2px solid rgba(83,123,47,0.2);
+  box-shadow:0 2px 12px rgba(20,44,20,0.08);
+  transition:all 0.2s;
+}
+nav.scrolled{
+  background:rgba(255,250,240,0.98);
+  border-bottom-color:rgba(83,123,47,0.25);
+}
+.nav-logo{
+  font-family:var(--serif);
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--g1);
+  text-decoration:none;
+  letter-spacing:-0.03em;
+}
+.nav-logo em{
+  font-style:italic;
+  color:var(--g3);
+}
+.nav-links{
+  display:flex;
+  gap:2rem;
+  list-style:none;
+  align-items:center;
+}
+.nav-links a{
+  font-size:0.85rem;
+  color:var(--g2);
+  text-decoration:none;
+  font-weight:500;
+  transition:color 0.2s;
+  padding:6px 0;
+  border-bottom:2px solid transparent;
+}
+.nav-links a:hover{
+  color:var(--g3);
+}
+.nav-links a.active{
+  color:var(--g3);
+  border-bottom-color:var(--g3);
+}
+
+/* Profile dropdown gaya 3D */
+.profile-wrap{position:relative}
+.profile-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  padding:6px 12px;
+  border-radius:30px;
+  border:2px solid rgba(83,123,47,0.3);
+  background:transparent;
+  font-family:var(--sans);
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--g2);
+  box-shadow:#537B2F 3px 3px 0 0;
+  transition:all .15s;
+}
+.profile-btn:hover{background:#E4EB9C}
+.profile-btn:active{box-shadow:#537B2F 1px 1px 0 0;transform:translate(2px,2px)}
+.profile-btn img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.profile-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:.75rem;font-weight:700;
+}
+.profile-dropdown{
+  position:absolute;top:calc(100% + 10px);right:0;
+  background:#fff;border:2px solid rgba(83,123,47,0.2);
+  border-radius:20px;box-shadow:0 8px 32px rgba(20,44,20,0.15);
+  min-width:180px;overflow:hidden;display:none;z-index:600;
+}
+.profile-dropdown.show{display:block}
+.profile-dropdown a{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;color:var(--g1);
+  text-decoration:none;font-size:.85rem;font-weight:500;
+  transition:background .15s;
+}
+.profile-dropdown a:hover{background:var(--cream2)}
+.profile-dropdown .logout-link{
+  color:#dc3545;
+  border-top:1px solid rgba(83,123,47,.1);
+}
+
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  border:none;
+  background:transparent;
+  z-index:600;
+}
+.hamburger span{
+  display:block;
+  width:24px;
+  height:2px;
+  background:var(--g1);
+  border-radius:2px;
+  transition:all 0.3s;
+}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* MOBILE MENU (tanpa emoji, semua item konsisten) */
+.mobile-menu{
+  position:fixed;
+  top:0;
+  right:-280px;
+  width:280px;
+  height:100%;
+  background:#fff;
+  z-index:1000;
+  padding:70px 20px 20px;
+  transition:right 0.3s ease;
+  box-shadow:-5px 0 20px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  gap:0.5rem;
+}
+.mobile-menu.show{right:0}
+.mobile-menu a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  color:var(--g1);
+  font-weight:600;
+  border-radius:16px;
+  transition:background 0.2s;
+  text-decoration:none;
+  font-size:1rem;
+}
+.mobile-menu a:hover{background:var(--cream)}
+.mobile-menu a.active{
+  background:var(--g5);
+  color:var(--g2);
+}
+.mobile-menu hr{
+  margin:12px 0;
+  border:none;
+  border-top:1px solid #e0e8e2;
+}
+.menu-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  z-index:999;
+  display:none;
+}
+.menu-overlay.show{display:block}
+
+/* ===== BUTTON 3D GLOBAL ===== */
+.btn-primary, .btn-cta-white {
+  background:linear-gradient(135deg,#537B2F,#2D5128);
+  border:2px solid #142C14;
+  border-radius:30px;
+  box-shadow:#142C14 4px 4px 0 0;
+  color:#fff;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  font-size:0.9rem;
+  padding:10px 22px;
+  text-decoration:none;
+  transition:all 0.15s;
+  font-family:var(--sans);
+}
+.btn-primary:hover, .btn-cta-white:hover {
+  background:linear-gradient(135deg,#8DA750,#537B2F);
+  box-shadow:#142C14 4px 4px 0 0;
+  transform:translateY(-2px);
+}
+.btn-primary:active, .btn-cta-white:active {
+  box-shadow:#142C14 2px 2px 0 0;
+  transform:translate(2px,2px);
+}
+.btn-ghost {
+  color:var(--g2);
+  font-size:0.88rem;
+  font-weight:600;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  transition:gap 0.2s,color 0.2s;
+  background:transparent;
+  border:none;
+}
+.btn-ghost:hover{color:var(--g3);gap:0.8rem}
+.btn-cta-white{background:#fff;color:var(--g2);box-shadow:#142C14 4px 4px 0 0;border:2px solid #142C14}
+.btn-cta-white:hover{background:#E4EB9C;color:var(--g1)}
+
+/* PAGE CONTENT */
+.container{max-width:1140px;margin:0 auto;padding:86px 4% 60px}
+.page-header{margin-bottom:32px}
+.page-header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;letter-spacing:-0.03em;color:var(--g1)}
+.page-header p{font-size:0.9rem;color:#5a7a5c;margin-top:4px}
+
+/* RIWAYAT GRID */
+.riwayat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.riwayat-card{background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(45,138,53,0.08);transition:transform 0.2s,box-shadow 0.2s;position:relative}
+.riwayat-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(45,138,53,0.12)}
+.riwayat-img{width:100%;height:180px;object-fit:cover;display:block;background:#e8f2e5}
+.riwayat-body{padding:16px}
+.riwayat-label{display:inline-block;background:#e8f2e5;color:var(--g3);padding:3px 10px;border-radius:40px;font-size:0.7rem;font-weight:600;margin-bottom:8px}
+.riwayat-nama{font-family:var(--serif);font-size:1.05rem;font-weight:700;color:var(--g1);margin-bottom:4px}
+.riwayat-meta{font-size:0.78rem;color:#7a9c7e;display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.riwayat-conf{font-weight:600;color:var(--g3)}
+.status-badge{display:inline-block;padding:2px 10px;border-radius:40px;font-size:0.68rem;font-weight:600}
+.status-benar{background:#d4edda;color:#155724}
+.status-salah{background:#f8d7da;color:#721c24}
+.status-pending{background:#fff3cd;color:#856404}
+.riwayat-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #f0f4f0}
+.riwayat-date{font-size:0.75rem;color:#9ab09e}
+.card-actions{display:flex;gap:8px}
+.btn-share{display:inline-flex;align-items:center;gap:6px;background:var(--g3);color:#fff;border:none;padding:6px 14px;border-radius:40px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:var(--sans);text-decoration:none;transition:background 0.2s}
+.btn-share:hover{background:var(--g2)}
+.btn-shared{background:#e8f2e5;color:var(--g3)}
+.btn-shared:hover{background:#d4e8d6}
+.btn-delete{background:#fff0f0;color:#c0392b;border:none;padding:6px 12px;border-radius:40px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:background 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-delete:hover{background:#fdd;color:#a00}
+
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;gap:8px;margin-top:40px;flex-wrap:wrap}
+.page-item{display:inline-block}
+.page-link{display:inline-block;padding:8px 14px;background:#fff;border:1px solid #dde4df;border-radius:30px;color:var(--g2);text-decoration:none;font-weight:500;transition:all 0.2s}
+.page-link:hover{background:var(--g5);border-color:var(--g3)}
+.page-item.active .page-link{background:var(--g3);color:#fff;border-color:var(--g3)}
+.page-item.disabled .page-link{opacity:0.5;pointer-events:none;background:#f5f5f5}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:80px 20px;color:#7a9c7e}
+.empty-state svg{width:64px;height:64px;stroke:#c5dfc7;fill:none;stroke-width:1.2;margin-bottom:16px}
+.empty-state p{font-size:0.9rem;margin-bottom:20px}
+.btn-mulai{display:inline-flex;align-items:center;gap:8px;background:var(--g3);color:#fff;padding:12px 24px;border-radius:40px;font-size:0.9rem;font-weight:600;text-decoration:none;transition:background 0.2s}
+.btn-mulai:hover{background:var(--g2)}
+
+/* MODAL BAGIKAN */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:28px;padding:28px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal-box h3{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--g1);margin-bottom:6px}
+.modal-box p{font-size:0.85rem;color:#5a7a5c;margin-bottom:20px;line-height:1.6}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:0.82rem;font-weight:600;color:var(--g2);margin-bottom:6px}
+.form-group input,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid #d4e8d6;border-radius:16px;font-family:var(--sans);font-size:0.88rem;color:var(--g1);outline:none;transition:border-color 0.2s;resize:none;background:#fff}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--g3)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-kirim{flex:1;background:var(--g3);color:#fff;border:none;padding:12px;border-radius:40px;font-family:var(--sans);font-size:0.9rem;font-weight:600;cursor:pointer;transition:background 0.2s}
+.btn-kirim:hover{background:var(--g2)}
+.btn-batal{background:#f0f4f0;color:var(--g2);border:none;padding:12px 20px;border-radius:40px;font-family:var(--sans);font-size:0.9rem;font-weight:600;cursor:pointer;transition:background 0.2s}
+.btn-batal:hover{background:#e0e8e2}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hamburger{display:flex}
+  .nav-links{display:none}
+  .riwayat-grid{grid-template-columns:1fr}
+  .page-header{padding-top:0}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- MOBILE SIDEBAR (tanpa emoji, semua link sama) -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('beranda') }}">Beranda</a>
+  <a href="{{ url_for('kamera') }}">Identifikasi</a>
+  <a href="{{ url_for('riwayat') }}" class="active">Riwayat</a>
+  <a href="{{ url_for('forum') }}">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_logout') }}">Keluar</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- NAVBAR dengan Profile Dropdown -->
+<nav id="navbar">
+  <a href="{{ url_for('beranda') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('beranda') }}">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}">Identifikasi</a></li>
+    <li><a href="{{ url_for('riwayat') }}" class="active">Riwayat</a></li>
+    <li><a href="{{ url_for('forum') }}">Forum</a></li>
+    <li>
+      <div class="profile-wrap">
+        <button class="profile-btn" onclick="toggleProfile(event)">
+          {% if session.get('user_foto') %}
+          <img src="{{ session.get('user_foto') }}" alt="foto">
+          {% else %}
+          <div class="profile-avatar">{{ session.get('user_nama', 'U')[0]|upper }}</div>
+          {% endif %}
+          {{ session.get('user_nama', '').split(' ')[0] }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <a href="{{ url_for('user_logout') }}" class="logout-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Keluar
+          </a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>Riwayat Deteksi</h1>
+    <p>Semua hasil identifikasi gulma yang pernah Anda lakukan</p>
+  </div>
+
+  {% if riwayat %}
+  <div class="riwayat-grid">
+    {% for sesi in riwayat %}
+    <div class="riwayat-card" data-sesi-id="{{ sesi.id_sesi_foto }}">
+      {% if sesi.foto_annotasi or sesi.foto_upload %}
+      <a href="{{ url_for('detail_sesi', sesi_foto=sesi.id_sesi_foto) }}">
+        <img class="riwayat-img" src="{{ url_for('static', filename='uploads/' + (sesi.foto_annotasi if sesi.foto_annotasi else sesi.foto_upload)) }}" alt="{{ sesi.nama_umum or sesi.label_ai }}" loading="lazy">
+      </a>
+      {% else %}
+      <a href="{{ url_for('detail_sesi', sesi_foto=sesi.id_sesi_foto) }}">
+        <div class="riwayat-img" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--g2),var(--g3))">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"><path d="M12 2C8 6 4 10 4 14a8 8 0 0016 0c0-4-4-8-8-12z"/></svg>
+        </div>
+      </a>
+      {% endif %}
+      <div class="riwayat-body">
+        <div class="riwayat-label">{{ sesi.label_ai|replace('_',' ') }}</div>
+        <div class="riwayat-nama">{{ sesi.nama_umum or sesi.label_ai|replace('_',' ') }}</div>
+        <div class="riwayat-meta">
+          <span class="riwayat-conf">{{ (sesi.confidence_score * 100)|round(1) }}%</span>
+          <span>{{ sesi.total }} deteksi</span>
+          {% if sesi.status_akurasi == 'Benar' %}
+          <span class="status-badge status-benar">Benar</span>
+          {% elif sesi.status_akurasi == 'Salah' %}
+          <span class="status-badge status-salah">Salah</span>
+          {% else %}
+          <span class="status-badge status-pending">Belum diverifikasi</span>
+          {% endif %}
+        </div>
+        <div class="riwayat-footer">
+          <span class="riwayat-date">{{ sesi.tgl_deteksi.strftime('%d %b %Y, %H:%M') if sesi.tgl_deteksi else '' }}</span>
+          <div class="card-actions">
+            {% if sesi.is_public %}
+            <span class="btn-share btn-shared" onclick="event.preventDefault()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Terbagikan
+            </span>
+            {% else %}
+            <span class="btn-share" onclick="event.preventDefault();bukaBagikan('{{ sesi.id_sesi_foto }}','{{ (sesi.nama_umum or sesi.label_ai)|replace("'","") }}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              Bagikan
+            </span>
+            {% endif %}
+            <button class="btn-delete" onclick="hapusRiwayat('{{ sesi.id_sesi_foto }}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- PAGINATION -->
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('riwayat', page=page-1) }}" class="page-link">‹ Sebelumnya</a>
+    {% endif %}
+    {% for p in range(1, total_pages+1) %}
+      {% if p == page %}
+      <span class="page-item active"><span class="page-link">{{ p }}</span></span>
+      {% elif p >= page-2 and p <= page+2 %}
+      <a href="{{ url_for('riwayat', page=p) }}" class="page-link">{{ p }}</a>
+      {% elif p == 1 or p == total_pages %}
+      <a href="{{ url_for('riwayat', page=p) }}" class="page-link">{{ p }}</a>
+      {% elif p == page-3 or p == page+3 %}
+      <span class="page-link">...</span>
+      {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}
+    <a href="{{ url_for('riwayat', page=page+1) }}" class="page-link">Selanjutnya ›</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    <p>Belum ada riwayat deteksi. Mulai identifikasi gulma sekarang!</p>
+    <a href="{{ url_for('kamera') }}" class="btn-mulai">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Mulai Identifikasi
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- MODAL BAGIKAN KE FORUM -->
+<div class="modal-overlay" id="modalBagikan">
+  <div class="modal-box">
+    <h3>Bagikan ke Forum</h3>
+    <p>Tulis judul dan deskripsi singkat untuk memulai diskusi di forum.</p>
+    <form id="formBagikan" method="POST">
+      <div class="form-group">
+        <label>Judul Diskusi</label>
+        <input type="text" name="judul" id="inputJudul" placeholder="Contoh: Menemukan gulma di sawah saya..." maxlength="100" required>
+      </div>
+      <div class="form-group">
+        <label>Deskripsi (opsional)</label>
+        <textarea name="deskripsi" rows="3" placeholder="Ceritakan lokasi, kondisi, atau pertanyaan Anda..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-batal" onclick="tutupBagikan()">Batal</button>
+        <button type="submit" class="btn-kirim">Bagikan ke Forum</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Custom cursor (sama seperti beranda)
+const cur = document.getElementById('cursor'), ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+if(cur&&ring){
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+  (function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)})();
+  document.querySelectorAll('a,button,.riwayat-card,.page-link').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cur.style.width='20px';cur.style.height='20px';ring.style.width='54px';ring.style.height='54px'});
+    el.addEventListener('mouseleave',()=>{cur.style.width='12px';cur.style.height='12px';ring.style.width='36px';ring.style.height='36px'});
+  });
+}
+
+// Navbar scroll
+const navEl=document.getElementById('navbar');
+window.addEventListener('scroll',()=>navEl.classList.toggle('scrolled',window.scrollY>40));
+
+// Mobile menu
+const hamburger=document.getElementById('hamburger'),mobileMenu=document.getElementById('mobileMenu'),menuOverlay=document.getElementById('menuOverlay');
+function openMenu(){hamburger.classList.add('open');mobileMenu.classList.add('show');menuOverlay.classList.add('show');document.body.style.overflow='hidden';}
+function closeMenu(){hamburger.classList.remove('open');mobileMenu.classList.remove('show');menuOverlay.classList.remove('show');document.body.style.overflow='';}
+hamburger.addEventListener('click',openMenu);
+menuOverlay.addEventListener('click',closeMenu);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+
+// Profile dropdown
+function toggleProfile(e){
+  e.stopPropagation();
+  document.getElementById('profileDropdown').classList.toggle('show');
+}
+document.addEventListener('click',()=>document.getElementById('profileDropdown').classList.remove('show'));
+
+// Bagikan modal
+function bukaBagikan(sesiFoto, namaGulma){
+  document.getElementById('inputJudul').value = 'Temuan gulma: ' + namaGulma;
+  document.getElementById('formBagikan').action = '/bagikan-ke-forum/' + sesiFoto;
+  document.getElementById('modalBagikan').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function tutupBagikan(){
+  document.getElementById('modalBagikan').classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.getElementById('modalBagikan').addEventListener('click', function(e){
+  if(e.target === this) tutupBagikan();
+});
+
+// Hapus riwayat dengan konfirmasi
+function hapusRiwayat(sesiFoto){
+  if(confirm('Apakah Anda yakin ingin menghapus seluruh riwayat deteksi ini? Tindakan ini tidak dapat dibatalkan.')){
+    fetch(`/hapus-riwayat/${sesiFoto}`, { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        if(data.success){
+          alert('Riwayat berhasil dihapus.');
+          location.reload();
+        } else {
+          alert('Gagal menghapus: ' + (data.message || 'Terjadi kesalahan'));
+        }
+      })
+      .catch(err => {
+        alert('Terjadi kesalahan jaringan. Coba lagi.');
+      });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,676 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Data Riwayat & Validasi — Gulmaify Admin{% endblock %}
+{% block page_name %}Data Riwayat & Validasi{% endblock %}
+
+{% block head %}
+<style>
+  .content { background: #0d2214; }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-bar input, .filter-bar select {
+    padding: 8px 14px;
+    border: 2px solid rgba(83,123,47,0.3);
+    border-radius: 12px;
+    background: rgba(255,250,240,0.9);
+    font-family: var(--sans);
+  }
+  .btn-print {
+    background: #537B2F;
+    color: white;
+    border: 2px solid #142C14;
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.15s;
+  }
+  .btn-print:hover { background: #8DA750; transform: translateY(-2px); }
+
+  /* Sesi card */
+  .sesi-card {
+    background: rgba(255,250,240,0.95);
+    border-radius: 24px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(83,123,47,0.3);
+  }
+  .sesi-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(83,123,47,0.1);
+    border-bottom: 1px solid rgba(83,123,47,0.2);
+  }
+  .sesi-header img { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; }
+  .sesi-meta { flex: 1; }
+  .waktu { font-size: 0.75rem; color: #5a7a5c; }
+  .sesi-akurasi { font-size: 1.2rem; font-weight: 900; color: #2e7d32; text-align: right; }
+  .sesi-akurasi.belum { color: #856404; }
+
+  /* Deteksi list - tampilan multi dalam 1 baris */
+  .deteksi-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .deteksi-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(255,250,240,0.5);
+    border-radius: 16px;
+    flex-wrap: wrap;
+  }
+  .deteksi-row .nama { flex: 2; font-weight: 700; font-size: 0.85rem; }
+  .deteksi-row .conf { font-size: 0.8rem; color: #5a7a5c; min-width: 60px; text-align: right; }
+
+  /* Badge status */
+  .badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .badge-benar { background: #d4edda; color: #155724; }
+  .badge-salah { background: #f8d7da; color: #721c24; }
+  .badge-belum { background: #e2e8e4; color: #4a5e52; }
+  .badge-bukan { background: #e2e8e4; color: #6c757d; }
+
+  /* Edit panel - CSS cantik */
+  .edit-panel {
+    display: none;
+    width: 100%;
+    margin-top: 12px;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    border: 1px solid #c8e0cc;
+  }
+  .edit-panel.show { display: block; }
+  .edit-panel label {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #2D5128;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .edit-select-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .edit-select-wrap select {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    border: 2px solid #bdd4bf;
+    border-radius: 40px;
+    background: #fff;
+    font-family: var(--sans);
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .edit-select-wrap select:hover, .edit-select-wrap select:focus {
+    border-color: #537B2F;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(83,123,47,0.2);
+  }
+  .edit-select-arrow {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 0.7rem;
+    color: #537B2F;
+  }
+  .edit-panel-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+  .btn-save {
+    background: #2D5128;
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-save:hover { background: #1b3a1a; transform: translateY(-1px); }
+  .btn-save:disabled { background: #9bbf8f; cursor: not-allowed; }
+  .btn-cancel {
+    background: #f0f0f0;
+    color: #2D5128;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-cancel:hover { background: #e0e0e0; }
+
+  /* Statistik */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: rgba(255,250,240,0.95);
+    border-radius: 20px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-number { font-size: 1.8rem; font-weight: 900; }
+  .stat-label { font-size: 0.7rem; color: #5a7a5c; }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  .pagination button {
+    padding: 6px 14px;
+    border: 1px solid rgba(83,123,47,0.3);
+    background: rgba(255,250,240,0.2);
+    color: #E4EB9C;
+    border-radius: 30px;
+    cursor: pointer;
+  }
+  .pagination button.active { background: #537B2F; color: white; }
+
+  /* Modal gambar */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 10000;
+  }
+  .modal-content { position: relative; width: 100%; height: 100%; }
+  .modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+  }
+  .modal-tabs {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+  .modal-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 85%;
+    max-height: 85%;
+    border-radius: 12px;
+  }
+
+  /* Print styles */
+  @media print {
+    .filter-bar, .pagination, .btn-print, .edit-panel, .btn-pencil,
+    .modal-overlay, .topbar, .sidebar, .hamburger-btn, .admin-profile,
+    .stats-grid, .sesi-header .waktu, .sesi-akurasi,
+    .deteksi-row .conf, .deteksi-row .btn-pencil { display: none !important; }
+    body, .content, .admin-main { background: white !important; margin: 0; padding: 0; }
+    .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .print-table th, .print-table td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .print-table th { background: #f2f2f2; }
+    .print-image { max-width: 80px; max-height: 80px; }
+    .signature-footer { display: block !important; margin-top: 40px; width: 100%; }
+    .signature-table { width: 100%; margin-top: 30px; }
+    .signature-table td { padding: 10px; vertical-align: top; }
+    #cardContainer, .stats-grid, .filter-bar { display: none; }
+    .print-container { display: block !important; }
+  }
+  .print-container { display: none; }
+  .signature-footer { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <h2 style="color: #E4EB9C;">Data Riwayat & Validasi</h2>
+  <button class="btn-print" onclick="preparePrint()">🖨️ Cetak Laporan</button>
+</div>
+
+<div class="stats-grid" id="statsContainer">
+  <div class="stat-card"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Total Objek Gulma</div></div>
+  <div class="stat-card"><div class="stat-number" id="statBenar" style="color:#2e7d32;">0</div><div class="stat-label">Benar</div></div>
+  <div class="stat-card"><div class="stat-number" id="statSalah" style="color:#c62828;">0</div><div class="stat-label">Salah</div></div>
+  <div class="stat-card"><div class="stat-number" id="statBelum" style="color:#f57c00;">0</div><div class="stat-label">Belum Diverifikasi</div></div>
+  <div class="stat-card"><div class="stat-number" id="statBukan" style="color:#6c757d;">0</div><div class="stat-label">Bukan Gulma</div></div>
+  <div class="stat-card"><div class="stat-number" id="statAkurasi">0%</div><div class="stat-label">Akurasi AI</div></div>
+</div>
+
+<div class="filter-bar">
+  <input type="text" id="searchInput" placeholder="Cari nama gulma..." oninput="filterAndUpdate()">
+  <select id="statusFilter" onchange="filterAndUpdate()">
+    <option value="">Semua Status</option>
+    <option value="benar">Ada Benar</option>
+    <option value="salah">Ada Salah</option>
+    <option value="belum">Belum Semua</option>
+    <option value="bukan">Ada Bukan Gulma</option>
+  </select>
+  <span id="tableCount">0 sesi</span>
+</div>
+
+<div id="cardContainer">
+  {% for sesi in data %}
+  <div class="sesi-card" data-labels="{{ sesi.deteksi | map(attribute='label_ai') | join(' ') | lower }}"
+       data-belum="{{ sesi.belum }}" data-benar="{{ sesi.benar }}" data-salah="{{ sesi.salah }}"
+       data-filtered="true">
+    <div class="sesi-header">
+      {% if sesi.foto_annotasi %}
+      <div class="img-preview" data-anotasi="{{ url_for('static', filename='uploads/' + sesi.foto_annotasi) }}"
+           data-asli="{{ url_for('static', filename='uploads/' + sesi.foto_upload) if sesi.foto_upload else '' }}">
+        <img src="{{ url_for('static', filename='uploads/' + sesi.foto_annotasi) }}" style="width:56px;height:56px;border-radius:12px;object-fit:cover;">
+      </div>
+      {% elif sesi.foto_upload %}
+      <div class="img-preview" data-anotasi="" data-asli="{{ url_for('static', filename='uploads/' + sesi.foto_upload) }}">
+        <img src="{{ url_for('static', filename='uploads/' + sesi.foto_upload) }}" style="width:56px;height:56px;border-radius:12px;object-fit:cover;">
+      </div>
+      {% endif %}
+      <div class="sesi-meta">
+        <div><strong>{{ sesi.total }} objek gulma</strong></div>
+        <div class="waktu">{{ sesi.tgl_deteksi.strftime('%d/%m/%Y %H:%M') if sesi.tgl_deteksi else '' }}</div>
+        {% if sesi.user_nama %}<div style="font-size:0.7rem;">👤 {{ sesi.user_nama }}</div>{% endif %}
+      </div>
+      <div style="text-align:right">
+        {% if sesi.akurasi is not none %}
+          <div class="sesi-akurasi">{{ sesi.akurasi }}%</div>
+          <div style="font-size:0.7rem;">akurasi sesi</div>
+        {% else %}
+          <div class="sesi-akurasi belum">—</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="deteksi-list">
+      {% for det in sesi.deteksi %}
+      <div class="deteksi-row" id="row-{{ det.id_riwayat }}" data-status="{{ det.status_akurasi }}" data-is-not-weed="{{ det.is_not_weed }}">
+        <div class="nama"><strong>{{ det.nama_umum or det.label_ai }}</strong></div>
+        <div class="conf">{{ (det.confidence_score * 100)|round(1) }}%</div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          {% if det.is_not_weed %}
+            <span class="badge badge-bukan">⊘ Bukan Gulma</span>
+          {% elif det.status_akurasi == 'Benar' %}
+            <span class="badge badge-benar">✓ Benar</span>
+          {% elif det.status_akurasi == 'Salah' %}
+            <span class="badge badge-salah">✗ Salah</span>
+            {% if det.label_asli and det.label_asli != 'Bukan Gulma' %}
+              <span class="koreksi" style="font-size:0.7rem; color:#c62828;">→ {{ det.label_asli }}</span>
+            {% endif %}
+          {% else %}
+            <span class="badge badge-belum">? Belum</span>
+          {% endif %}
+          <button class="btn-pencil" onclick="toggleEditPanel({{ det.id_riwayat }})">✏️</button>
+        </div>
+        <!-- Edit Panel dengan CSS cantik -->
+        <div class="edit-panel" id="edit-panel-{{ det.id_riwayat }}">
+          <label>Ubah status validasi:</label>
+          <div class="edit-select-wrap">
+            <select id="edit-sel-{{ det.id_riwayat }}" onchange="handleSelectChange({{ det.id_riwayat }}, '{{ det.label_ai }}', this)">
+              <option value="">— Pilih koreksi —</option>
+              <option value="Benar">✓ Benar ({{ det.label_ai }})</option>
+              {% for g in semua_gulma %}
+              <option value="Salah:{{ g.label_model }}">✗ Salah → {{ g.nama_umum }}</option>
+              {% endfor %}
+              <option value="Bukan Gulma">⊘ Bukan Gulma</option>
+              <option value="reset">↺ Reset ke Belum Diverifikasi</option>
+            </select>
+            <div class="edit-select-arrow">▼</div>
+          </div>
+          <div class="edit-panel-actions">
+            <button class="btn-save" id="btn-save-{{ det.id_riwayat }}" onclick="simpanAdmin({{ det.id_riwayat }})" disabled>Simpan</button>
+            <button class="btn-cancel" onclick="tutupEditPanel({{ det.id_riwayat }})">Batal</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div id="pagination"></div>
+
+<div id="imageModal" class="modal-overlay">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-tabs">
+      <button id="tabAnotasiBtn" class="tab-btn active" onclick="switchTab('anotasi')">Hasil Deteksi</button>
+      <button id="tabAsliBtn" class="tab-btn inactive" onclick="switchTab('asli')">Gambar Asli</button>
+    </div>
+    <img id="modalImageAnotasi" class="modal-image" style="display:block">
+    <img id="modalImageAsli" class="modal-image" style="display:none">
+  </div>
+</div>
+
+<!-- PRINT CONTAINER -->
+<div class="print-container">
+  <h2 style="text-align: center;">LAPORAN VALIDASI GULMA</h2>
+  <h4 style="text-align: center;">Hasil Identifikasi Gulma oleh AI (Terverifikasi)</h4>
+  <table class="print-table" id="printTable">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Gambar</th>
+        <th>Keputusan Gulma</th>
+        <th>Akurasi Sesi</th>
+        <th>Keterangan</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div class="signature-footer">
+    <table class="signature-table">
+      <tr><td style="width: 70%;">Sungailiat, _____________</td><td style="width: 30%; text-align: right;">Tanggal: ____ / ____ / ______</td></tr>
+      <tr><td style="padding-top: 30px;">Nama Ahli: ____________________</td><td style="padding-top: 30px; text-align: right;">Tanda Tangan: ____________________</td></tr>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentPage = 1;
+const perPage = 10;
+let pending = {};
+
+function collectFilteredDetections() {
+  const detections = [];
+  document.querySelectorAll('#cardContainer .sesi-card').forEach(card => {
+    if (card.dataset.filtered !== 'true') return;
+    card.querySelectorAll('.deteksi-row').forEach(row => {
+      const nama = row.querySelector('.nama strong')?.innerText || '';
+      const statusElem = row.querySelector('.badge');
+      let status = '';
+      let isNotWeed = false;
+      if (statusElem) {
+        const txt = statusElem.innerText;
+        if (txt.includes('Bukan Gulma')) { status = 'Bukan Gulma'; isNotWeed = true; }
+        else if (txt.includes('Benar')) status = 'Benar';
+        else if (txt.includes('Salah')) status = 'Salah';
+        else status = 'Belum';
+      }
+      detections.push({ nama, status, isNotWeed });
+    });
+  });
+  return detections;
+}
+
+function updateStatistics() {
+  const detections = collectFilteredDetections();
+  let total = 0, benar = 0, salah = 0, belum = 0, bukan = 0;
+  detections.forEach(d => {
+    if (d.isNotWeed) { bukan++; return; }
+    total++;
+    if (d.status === 'Benar') benar++;
+    else if (d.status === 'Salah') salah++;
+    else if (d.status === 'Belum') belum++;
+  });
+  document.getElementById('statTotal').innerText = total;
+  document.getElementById('statBenar').innerText = benar;
+  document.getElementById('statSalah').innerText = salah;
+  document.getElementById('statBelum').innerText = belum;
+  document.getElementById('statBukan').innerText = bukan;
+  const verified = benar + salah;
+  const akurasi = verified > 0 ? Math.round((benar / verified) * 100) : 0;
+  document.getElementById('statAkurasi').innerText = akurasi + '%';
+}
+
+function filterCards() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  let visible = 0;
+  document.querySelectorAll('#cardContainer .sesi-card').forEach(card => {
+    const labels = card.dataset.labels || '';
+    const benar = parseInt(card.dataset.benar);
+    const salah = parseInt(card.dataset.salah);
+    const belum = parseInt(card.dataset.belum);
+    let matchQ = !q || labels.includes(q);
+    let matchS = true;
+    if (status === 'benar') matchS = benar > 0;
+    else if (status === 'salah') matchS = salah > 0;
+    else if (status === 'belum') matchS = belum > 0;
+    else if (status === 'bukan') {
+      let hasBukan = false;
+      card.querySelectorAll('.deteksi-row').forEach(r => { if (r.dataset.isNotWeed === 'true') hasBukan = true; });
+      matchS = hasBukan;
+    }
+    const show = matchQ && matchS;
+    card.dataset.filtered = show ? 'true' : 'false';
+    if (show) visible++;
+  });
+  document.getElementById('tableCount').innerText = visible + ' sesi';
+  showPage(1);
+  updateStatistics();
+}
+
+function filterAndUpdate() { filterCards(); }
+
+function showPage(page) {
+  const cards = Array.from(document.querySelectorAll('#cardContainer .sesi-card'));
+  const filtered = cards.filter(c => c.dataset.filtered === 'true');
+  const totalPages = Math.ceil(filtered.length / perPage);
+  currentPage = Math.max(1, Math.min(page, totalPages));
+  cards.forEach(c => c.style.display = 'none');
+  filtered.slice((currentPage-1)*perPage, currentPage*perPage).forEach(c => c.style.display = '');
+  renderPagination(totalPages);
+}
+
+function renderPagination(total) {
+  const container = document.getElementById('pagination');
+  container.innerHTML = '';
+  if (total <= 1) return;
+  const prev = document.createElement('button');
+  prev.textContent = '« Sebelumnya';
+  prev.disabled = currentPage === 1;
+  prev.onclick = () => showPage(currentPage-1);
+  container.appendChild(prev);
+  for (let i=1; i<=total; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    if (i === currentPage) btn.classList.add('active');
+    btn.onclick = () => showPage(i);
+    container.appendChild(btn);
+  }
+  const next = document.createElement('button');
+  next.textContent = 'Selanjutnya »';
+  next.disabled = currentPage === total;
+  next.onclick = () => showPage(currentPage+1);
+  container.appendChild(next);
+}
+
+function toggleEditPanel(id) {
+  const panel = document.getElementById(`edit-panel-${id}`);
+  if (panel.classList.contains('show')) panel.classList.remove('show');
+  else {
+    document.querySelectorAll('.edit-panel.show').forEach(p => p.classList.remove('show'));
+    panel.classList.add('show');
+  }
+}
+function tutupEditPanel(id) {
+  const panel = document.getElementById(`edit-panel-${id}`);
+  panel.classList.remove('show');
+  const sel = document.getElementById(`edit-sel-${id}`);
+  if (sel) sel.value = '';
+  delete pending[id];
+  const btn = document.getElementById(`btn-save-${id}`);
+  if (btn) btn.disabled = true;
+}
+function handleSelectChange(id, labelAi, sel) {
+  const val = sel.value;
+  if (val) pending[id] = val;
+  else delete pending[id];
+  const btn = document.getElementById(`btn-save-${id}`);
+  if (btn) btn.disabled = !val;
+}
+async function simpanAdmin(id) {
+  let value = pending[id];
+  if (!value) { alert('Pilih koreksi terlebih dahulu!'); return; }
+  let labelAsli = '';
+  let isNotWeed = false;
+  if (value === 'Benar') labelAsli = '';
+  else if (value === 'Bukan Gulma') { labelAsli = 'Bukan Gulma'; isNotWeed = true; }
+  else if (value === 'reset') labelAsli = '';
+  else if (value.startsWith('Salah:')) labelAsli = value.split(':')[1];
+  else labelAsli = value;
+  const fd = new FormData();
+  fd.append('label_asli', labelAsli);
+  fd.append('is_not_weed', isNotWeed);
+  try {
+    const res = await fetch(`/admin/konfirmasi/${id}`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.status === 'success') location.reload();
+    else alert('Gagal: ' + (data.message || 'Error'));
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function preparePrint() {
+  const rows = [];
+  let counter = 1;
+  document.querySelectorAll('#cardContainer .sesi-card').forEach(card => {
+    // Ambil akurasi sesi dari header
+    let akurasiSesi = '';
+    const akurasiElem = card.querySelector('.sesi-akurasi');
+    if (akurasiElem && !akurasiElem.innerText.includes('—')) akurasiSesi = akurasiElem.innerText;
+    // Ambil gambar pertama
+    let imageUrl = '';
+    const imgPreview = card.querySelector('.img-preview');
+    if (imgPreview) imageUrl = imgPreview.dataset.anotasi || imgPreview.dataset.asli || '';
+    // Kumpulkan semua deteksi dalam 1 baris (untuk multi)
+    let keputusan = '';
+    let keterangan = '';
+    const deteksiRows = card.querySelectorAll('.deteksi-row');
+    const keputusanList = [];
+    const keteranganList = [];
+    deteksiRows.forEach(row => {
+      const namaElem = row.querySelector('.nama strong');
+      const nama = namaElem ? namaElem.innerText : '';
+      const badgeElem = row.querySelector('.badge');
+      let status = badgeElem ? badgeElem.innerText.trim() : '';
+      const koreksiElem = row.querySelector('.koreksi');
+      let koreksi = koreksiElem ? koreksiElem.innerText.trim() : '';
+      if (status.includes('Benar')) {
+        keputusanList.push(`${nama} (Benar)`);
+      } else if (status.includes('Salah')) {
+        keputusanList.push(`${nama} (Salah)`);
+        if (koreksi) keteranganList.push(`${nama} → ${koreksi}`);
+      } else if (status.includes('Bukan Gulma')) {
+        keputusanList.push(`${nama} (Bukan Gulma)`);
+        keteranganList.push(`${nama} = bukan gulma`);
+      } else {
+        // Belum diverifikasi - tidak masuk print
+        return;
+      }
+    });
+    if (keputusanList.length === 0) return; // skip jika belum ada yg divalidasi
+    keputusan = keputusanList.join('; ');
+    keterangan = keteranganList.join('; ');
+    rows.push({
+      no: counter++,
+      imageUrl,
+      keputusan,
+      akurasi: akurasiSesi,
+      keterangan
+    });
+  });
+  const tbody = document.querySelector('#printTable tbody');
+  tbody.innerHTML = '';
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.appendChild(Object.assign(document.createElement('td'), { textContent: row.no }));
+    const tdImg = document.createElement('td');
+    if (row.imageUrl) {
+      const img = document.createElement('img');
+      img.src = row.imageUrl;
+      img.style.maxWidth = '80px'; img.style.maxHeight = '80px';
+      tdImg.appendChild(img);
+    } else tdImg.textContent = '-';
+    tr.appendChild(tdImg);
+    tr.appendChild(Object.assign(document.createElement('td'), { textContent: row.keputusan }));
+    tr.appendChild(Object.assign(document.createElement('td'), { textContent: row.akurasi }));
+    tr.appendChild(Object.assign(document.createElement('td'), { textContent: row.keterangan }));
+    tbody.appendChild(tr);
+  });
+  document.querySelector('.print-container').style.display = 'block';
+  document.querySelector('.stats-grid').style.display = 'none';
+  document.querySelector('.filter-bar').style.display = 'none';
+  document.getElementById('cardContainer').style.display = 'none';
+  document.getElementById('pagination').style.display = 'none';
+  window.print();
+  setTimeout(() => {
+    document.querySelector('.print-container').style.display = 'none';
+    document.querySelector('.stats-grid').style.display = 'grid';
+    document.querySelector('.filter-bar').style.display = 'flex';
+    document.getElementById('cardContainer').style.display = 'block';
+    document.getElementById('pagination').style.display = 'flex';
+  }, 500);
+}
+
+function openImageModal(anotasiUrl, asliUrl) {
+  const modal = document.getElementById('imageModal');
+  const imgA = document.getElementById('modalImageAnotasi');
+  const imgB = document.getElementById('modalImageAsli');
+  imgA.src = anotasiUrl || '';
+  imgB.src = asliUrl || '';
+  if (anotasiUrl) { imgA.style.display = 'block'; imgB.style.display = 'none'; switchTab('anotasi'); }
+  else { imgA.style.display = 'none'; imgB.style.display = 'block'; switchTab('asli'); }
+  modal.style.display = 'block';
+}
+function switchTab(tab) {
+  const imgA = document.getElementById('modalImageAnotasi');
+  const imgB = document.getElementById('modalImageAsli');
+  const btnA = document.getElementById('tabAnotasiBtn');
+  const btnB = document.getElementById('tabAsliBtn');
+  if (tab === 'anotasi' && imgA.src) {
+    imgA.style.display = 'block'; imgB.style.display = 'none';
+    btnA.classList.add('active'); btnB.classList.remove('active');
+  } else {
+    imgA.style.display = 'none'; imgB.style.display = 'block';
+    btnA.classList.remove('active'); btnB.classList.add('active');
+  }
+}
+function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.img-preview').forEach(el => {
+    el.addEventListener('click', () => openImageModal(el.dataset.anotasi, el.dataset.asli));
+  });
+  filterCards();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+{% endblock %}

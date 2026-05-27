@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Beranda - Gulmaify</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0
+}
+
+:root{
+  --g1:#142C14;
+  --g2:#2D5128;
+  --g3:#537B2F;
+  --g4:#8DA750;
+  --g5:#E4EB9C;
+  --cream:#FFFAF0;
+  --cream2:#F2F4F5;
+  --gold:#FFB800;
+  --rust:#FF6D2D;
+  --dark:#0b1f0c;
+  --serif:'DM Serif Display','Fraunces',Georgia,serif;
+  --sans:'Instrument Sans','Quicksand',system-ui,sans-serif;
+  --shadow-green:0 8px 20px rgba(20,44,20,0.12);
+  --shadow-3d:0 4px 0 0 #142C14;
+}
+html{ scroll-behavior:smooth }
+body{
+  font-family:var(--sans);
+  background:var(--cream);
+  color:var(--g1);
+  overflow-x:hidden
+}
+
+/* custom cursor desktop */
+@media (pointer: fine) {
+  #cursor{
+    position:fixed;
+    width:12px;
+    height:12px;
+    background:var(--g3);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:transform 0.15s,width 0.2s,height 0.2s,background 0.2s;
+    mix-blend-mode:multiply
+  }
+  #cursor-ring{
+    position:fixed;
+    width:36px;
+    height:36px;
+    border:1.5px solid var(--g2);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9998;
+    transform:translate(-50%,-50%);
+    transition:transform 0.35s cubic-bezier(.25,.46,.45,.94),width 0.3s,height 0.3s,border-color 0.3s
+  }
+}
+@media (pointer: coarse) { 
+  #cursor, #cursor-ring { display: none; } 
+}
+
+/* ===== NAVBAR ===== */
+nav{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:500;
+  height:66px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 4%;
+  background:rgba(255,250,240,0.95);
+  backdrop-filter:blur(16px);
+  border-bottom:2px solid rgba(83,123,47,0.2);
+  box-shadow:0 2px 12px rgba(20,44,20,0.08);
+  transition:all 0.2s;
+}
+nav.scrolled{
+  background:rgba(255,250,240,0.98);
+  border-bottom-color:rgba(83,123,47,0.25);
+}
+.nav-logo{
+  font-family:var(--serif);
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--g1);
+  text-decoration:none;
+  letter-spacing:-0.03em;
+}
+.nav-logo em{ font-style:italic; color:var(--g3); }
+.nav-links{
+  display:flex;
+  gap:2rem;
+  list-style:none;
+  align-items:center;
+}
+.nav-links a{
+  font-size:0.85rem;
+  color:var(--g2);
+  text-decoration:none;
+  font-weight:500;
+  transition:color 0.2s;
+  padding:6px 0;
+  border-bottom:2px solid transparent;
+}
+.nav-links a:hover{ color:var(--g3); }
+.nav-links a.active{
+  color:var(--g3);
+  border-bottom-color:var(--g3);
+}
+
+/* Profile dropdown 3D */
+.profile-wrap{position:relative}
+.profile-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  padding:6px 12px;
+  border-radius:30px;
+  border:2px solid rgba(83,123,47,0.3);
+  background:transparent;
+  font-family:var(--sans);
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--g2);
+  box-shadow:#537B2F 3px 3px 0 0;
+  transition:all .15s;
+}
+.profile-btn:hover{ background:#E4EB9C; }
+.profile-btn:active{ box-shadow:#537B2F 1px 1px 0 0; transform:translate(2px,2px); }
+.profile-btn img{ width:28px; height:28px; border-radius:50%; object-fit:cover; }
+.profile-avatar{
+  width:28px; height:28px; border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:.75rem; font-weight:700;
+}
+.profile-dropdown{
+  position:absolute; top:calc(100% + 10px); right:0;
+  background:#fff; border:2px solid rgba(83,123,47,0.2);
+  border-radius:20px; box-shadow:0 8px 32px rgba(20,44,20,0.15);
+  min-width:180px; overflow:hidden; display:none; z-index:600;
+}
+.profile-dropdown.show{ display:block; }
+.profile-dropdown a{
+  display:flex; align-items:center; gap:10px;
+  padding:12px 16px; color:var(--g1);
+  text-decoration:none; font-size:.85rem; font-weight:500;
+  transition:background .15s;
+}
+.profile-dropdown a:hover{ background:var(--cream2); }
+.profile-dropdown .logout-link{
+  color:#dc3545;
+  border-top:1px solid rgba(83,123,47,.1);
+}
+
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  border:none;
+  background:transparent;
+  z-index:600;
+}
+.hamburger span{
+  display:block;
+  width:24px;
+  height:2px;
+  background:var(--g1);
+  border-radius:2px;
+  transition:all 0.3s;
+}
+.hamburger.open span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2){ opacity:0; transform:scaleX(0); }
+.hamburger.open span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+
+/* ===== MOBILE MENU (konsisten, tanpa emoji, semua link sama) ===== */
+.mobile-menu{
+  position:fixed;
+  top:0;
+  right:-280px;
+  width:280px;
+  height:100%;
+  background:#fff;
+  z-index:1000;
+  padding:70px 20px 20px;
+  transition:right 0.3s ease;
+  box-shadow:-5px 0 20px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  gap:0.5rem;
+}
+.mobile-menu.show{ right:0; }
+.mobile-menu a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  color:var(--g1);
+  font-weight:600;
+  border-radius:16px;
+  transition:background 0.2s;
+  text-decoration:none;
+  font-size:1rem;
+}
+.mobile-menu a:hover{ background:var(--cream); }
+.mobile-menu a.active{
+  background:var(--g5);
+  color:var(--g2);
+}
+.mobile-menu hr{
+  margin:12px 0;
+  border:none;
+  border-top:1px solid #e0e8e2;
+}
+/* Tidak ada gaya khusus untuk logout, semua link sama */
+.menu-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  z-index:999;
+  display:none;
+}
+.menu-overlay.show{ display:block; }
+
+
+.btn-ghost {
+  color:var(--g2);
+  font-size:0.88rem;
+  font-weight:600;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  transition:gap 0.2s,color 0.2s;
+  background:transparent;
+  border:none;
+}
+/* HERO dengan overlay gradasi */
+.hero{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:center;
+  padding:66px 4% 0;
+  position:relative;
+  overflow:hidden;
+  gap:3rem;
+}
+.hero-video-bg{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+}
+.hero-video-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,#8DA750 0%,rgba(255,250,240,0.75) 25%,#142C14 100%);
+  z-index:1;
+}
+.hero-blob{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(80px);
+  pointer-events:none;
+  z-index:0;
+}
+.blob1{ width:700px; height:700px; top:-200px; right:-150px; background:radial-gradient(circle,rgba(83,123,47,0.25) 0%,transparent 70%); animation:blobFloat1 8s ease-in-out infinite; }
+.blob2{ width:500px; height:500px; bottom:-100px; left:-100px; background:radial-gradient(circle,rgba(45,81,40,0.2) 0%,transparent 70%); animation:blobFloat2 10s ease-in-out infinite; }
+.blob3{ width:300px; height:300px; top:40%; left:40%; background:radial-gradient(circle,rgba(255,184,0,0.1) 0%,transparent 70%); animation:blobFloat3 6s ease-in-out infinite; }
+@keyframes blobFloat1{ 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-30px,20px) scale(1.05)} }
+@keyframes blobFloat2{ 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(25px,-30px) scale(1.08)} }
+@keyframes blobFloat3{ 0%,100%{transform:translate(0,0)} 50%{transform:translate(-20px,20px)} }
+
+.hero-content{ position:relative; z-index:2; }
+.hero-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  font-size:0.72rem;
+  font-weight:700;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--g3);
+  background:rgba(83,123,47,0.1);
+  border:1px solid rgba(83,123,47,0.3);
+  padding:0.35rem 1rem;
+  border-radius:100px;
+  margin-bottom:2rem;
+}
+.hero-tag::before{
+  content:'';
+  width:6px;
+  height:6px;
+  background:var(--g4);
+  border-radius:50%;
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{ 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+.hero-title{
+  font-family:var(--serif);
+  font-size:clamp(2.8rem,5.5vw,4.4rem);
+  line-height:1.05;
+  letter-spacing:-0.03em;
+  color:var(--g1);
+  margin-bottom:1.5rem;
+  font-weight:900;
+}
+.hero-title em{ font-style:italic; color:var(--g3); display:block; }
+.hero-desc{
+  font-size:1rem;
+  line-height:1.8;
+  color:#4a6b4c;
+  max-width:440px;
+  margin-bottom:2.5rem;
+}
+.hero-actions{
+  display:flex;
+  gap:1rem;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+/* SLIDER GAMBAR GULMA */
+.hero-slider{
+  position:relative;
+  z-index:2;
+  width:100%;
+  max-width:420px;
+  margin:0 auto;
+  border-radius:32px;
+  overflow:hidden;
+  box-shadow:0 20px 40px rgba(20,44,20,0.2),0 4px 0 0 #142C14;
+  background:#fff;
+  aspect-ratio:4/3;
+}
+.slider-container{
+  position:relative;
+  width:100%;
+  height:100%;
+}
+.slider-image{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;
+  transition:opacity 1s ease-in-out;
+}
+.slider-image.active{ opacity:1; z-index:1; }
+.slider-caption{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  background:linear-gradient(to top, rgba(20,44,20,0.8), transparent);
+  color:white;
+  padding:20px 16px 12px;
+  text-align:center;
+  font-weight:600;
+  font-size:1rem;
+  font-family:var(--serif);
+  z-index:2;
+  pointer-events:none;
+}
+.slider-caption span{
+  background:rgba(0,0,0,0.5);
+  padding:4px 12px;
+  border-radius:40px;
+  backdrop-filter:blur(4px);
+}
+
+/* MARQUEE */
+.marquee-strip{
+  background:var(--g2);
+  padding:0.85rem 0;
+  overflow:hidden;
+  position:relative;
+  z-index:2;
+  border-top:2px solid var(--g1);
+  border-bottom:2px solid var(--g1);
+}
+.marquee-inner{
+  display:flex;
+  gap:3rem;
+  white-space:nowrap;
+  animation:marquee 22s linear infinite;
+  width:max-content;
+}
+.marquee-item{
+  display:inline-flex;
+  align-items:center;
+  gap:0.75rem;
+  font-size:0.8rem;
+  font-weight:600;
+  color:var(--g5);
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+}
+.marquee-item .dot{
+  width:4px;
+  height:4px;
+  background:var(--g5);
+  border-radius:50%;
+  flex-shrink:0;
+}
+@keyframes marquee{
+  from{ transform:translateX(0); }
+  to{ transform:translateX(-50%); }
+}
+
+/* SECTION GLOBAL */
+section{ position:relative; z-index:1; }
+.section-wrap{ max-width:1140px; margin:0 auto; padding:0 4%; }
+.section-label{
+  display:inline-block;
+  font-size:0.7rem;
+  font-weight:700;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--g3);
+  margin-bottom:0.75rem;
+}
+.section-h{
+  font-family:var(--serif);
+  font-size:clamp(2rem,4vw,3rem);
+  line-height:1.1;
+  letter-spacing:-0.03em;
+  color:var(--g1);
+  font-weight:900;
+}
+.section-p{ font-size:0.95rem; line-height:1.8; color:#4a6b4c; max-width:500px; }
+
+/* LANDING (pengenalan) DUA KOLOM */
+.landing{ padding:7rem 0; background:var(--cream); }
+.landing-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4rem;
+  align-items:start;
+}
+.pullquote{
+  border-left:4px solid var(--g4);
+  padding:1.25rem 1.5rem;
+  background:rgba(141,167,80,0.08);
+  border-radius:0 16px 16px 0;
+  margin:1.5rem 0;
+}
+.pullquote p{
+  font-family:var(--serif);
+  font-size:1.05rem;
+  line-height:1.7;
+  color:var(--g2);
+  font-style:italic;
+}
+.fact-list{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+.fact-item{
+  display:flex;
+  gap:1.25rem;
+  padding:1.25rem 0;
+  border-bottom:1px solid rgba(83,123,47,0.12);
+  transition:all 0.2s;
+}
+.fact-item:first-child{ border-top:1px solid rgba(83,123,47,0.12); }
+.fact-item:hover{ padding-left:8px; background:rgba(141,167,80,0.03); }
+.fact-num{
+  font-family:var(--serif);
+  font-size:2rem;
+  font-weight:900;
+  color:var(--g4);
+  opacity:0.4;
+  line-height:1;
+  flex-shrink:0;
+  width:36px;
+}
+.fact-body h4{ font-size:0.88rem; font-weight:700; color:var(--g1); margin-bottom:0.3rem; }
+.fact-body p{ font-size:0.82rem; color:#5a7a5c; line-height:1.65; }
+
+/* DAMPAK */
+.dampak{ padding:7rem 0; background:#0f2710; }
+.dampak .section-h{ color:#fff; }
+.dampak .section-label{ color:var(--g5); }
+.dampak-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1.5rem;
+  margin-top:3.5rem;
+}
+.dampak-card{
+  border:2px solid rgba(141,167,80,0.15);
+  border-radius:24px;
+  padding:2rem;
+  background:rgba(141,167,80,0.04);
+  transition:all 0.25s;
+}
+.dampak-card:hover{
+  background:rgba(141,167,80,0.09);
+  border-color:rgba(141,167,80,0.4);
+  transform:translateY(-5px);
+  box-shadow:0 12px 28px rgba(0,0,0,0.2);
+}
+.dampak-card-icon{
+  width:52px; height:52px;
+  background:rgba(141,167,80,0.15);
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:1.5rem;
+}
+.dampak-card-icon svg{ width:24px; height:24px; stroke:var(--g5); fill:none; stroke-width:1.5; }
+.dampak-card h3{ font-family:var(--serif); font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:0.75rem; }
+.dampak-card p{ font-size:0.83rem; line-height:1.75; color:rgba(255,255,255,0.55); }
+
+/* FAKTOR */
+.faktor{ padding:7rem 0; background:var(--cream2); }
+.faktor-grid{ display:grid; grid-template-columns:1fr; gap:3rem; margin-top:3.5rem; }
+.faktor-list{ display:flex; flex-direction:column; }
+.faktor-item{
+  display:flex;
+  gap:1.25rem;
+  padding:1.5rem 0;
+  border-bottom:1px solid rgba(83,123,47,0.12);
+  transition:padding 0.2s;
+}
+.faktor-item:first-child{ border-top:1px solid rgba(83,123,47,0.12); }
+.faktor-item:hover{ padding-left:8px; background:rgba(141,167,80,0.03); }
+.faktor-dot{
+  width:36px; height:36px;
+  background:var(--g5);
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  margin-top:2px;
+}
+.faktor-dot svg{ width:16px; height:16px; stroke:var(--g2); fill:none; stroke-width:1.8; }
+.faktor-item h4{ font-size:0.9rem; font-weight:700; color:var(--g1); margin-bottom:0.3rem; }
+.faktor-item p{ font-size:0.82rem; color:#5a7a5c; line-height:1.65; }
+
+/* CTA */
+.cta{
+  padding:8rem 4%;
+  background:var(--g3);
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+/* FOOTER */
+footer{
+  background:var(--g1);
+  padding:4rem 4%;
+  display:grid;
+  grid-template-columns:1.2fr 1fr 1fr;
+  gap:3rem;
+  align-items:start;
+}
+.foot-brand{ font-family:var(--serif); font-size:1.4rem; font-weight:700; color:#fff; margin-bottom:0.75rem; letter-spacing:-0.03em; }
+.foot-brand em{ font-style:italic; color:var(--g4); }
+.foot-desc{ font-size:0.8rem; color:rgba(255,255,255,0.4); line-height:1.75; }
+.foot-col h4{ font-size:0.7rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:1.25rem; }
+.foot-col ul{ list-style:none; display:flex; flex-direction:column; gap:0.65rem; }
+.foot-col a{ font-size:0.82rem; color:rgba(255,255,255,0.5); text-decoration:none; transition:color 0.2s; }
+.foot-col a:hover{ color:var(--g5); }
+.foot-bottom{
+  background:var(--dark);
+  border-top:1px solid rgba(255,255,255,0.05);
+  padding:1.25rem 4%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.foot-bottom p{ font-size:0.75rem; color:rgba(255,255,255,0.25); }
+
+/* REVEAL ANIMATION */
+.reveal{ opacity:0; transform:translateY(30px); transition:opacity 0.7s cubic-bezier(.16,1,.3,1),transform 0.7s cubic-bezier(.16,1,.3,1); }
+.reveal.in{ opacity:1; transform:translateY(0); }
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hamburger{ display:flex; }
+  .nav-links{ display:none; }
+  .hero{ grid-template-columns:1fr; padding-top:90px; gap:2rem; min-height:auto; padding-bottom:5rem; }
+  .hero-slider{ max-width:320px; margin-top:1rem; }
+  .landing-grid{ grid-template-columns:1fr; gap:2rem; }
+  .dampak-grid{ grid-template-columns:1fr; }
+  .faktor-grid{ grid-template-columns:1fr; }
+  footer{ grid-template-columns:1fr; gap:2rem; }
+  .foot-bottom{ flex-direction:column; gap:0.5rem; text-align:center; }
+  #cursor,#cursor-ring{ display:none; }
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- MOBILE SIDEBAR (tanpa emoji, tanpa warna khusus logout) -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('beranda') }}" class="active">Beranda</a>
+  <a href="{{ url_for('kamera') }}">Identifikasi</a>
+  <a href="{{ url_for('riwayat') }}">Riwayat</a>
+  <a href="{{ url_for('forum') }}">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_logout') }}">Keluar</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="{{ url_for('beranda') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('beranda') }}" class="active">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}">Identifikasi</a></li>
+    <li><a href="{{ url_for('riwayat') }}">Riwayat</a></li>
+    <li><a href="{{ url_for('forum') }}">Forum</a></li>
+    <li>
+      <div class="profile-wrap">
+        <button class="profile-btn" onclick="toggleProfile(event)">
+          {% if session.get('user_foto') %}
+          <img src="{{ session.get('user_foto') }}" alt="foto">
+          {% else %}
+          <div class="profile-avatar">{{ session.get('user_nama', 'U')[0]|upper }}</div>
+          {% endif %}
+          {{ session.get('user_nama', '').split(' ')[0] }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <a href="{{ url_for('user_logout') }}" class="logout-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Keluar
+          </a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO SECTION -->
+<section class="hero">
+  <div class="hero-video-bg"><div class="hero-video-overlay"></div></div>
+  <div class="hero-blob blob1"></div>
+  <div class="hero-blob blob2"></div>
+  <div class="hero-blob blob3"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Selamat Datang, {{ session.get('user_nama', 'Petani Cerdas') }}</div>
+    <h1 class="hero-title">Kenali Jenis Gulma<br>di Sekitar Anda<br><em>Dengan Mudah & Cepat</em></h1>
+    <p class="hero-desc">Kenali gulma, bagikan lokasi temuan, dan terhubung dengan pengguna lain melalui platform digital yang praktis dan interaktif.</p>
+  
+  </div>
+  <div class="hero-slider">
+    <div class="slider-container" id="weedSlider">
+      <img class="slider-image" src="{{ url_for('static', filename='images/gulma/rumputteki.jpeg') }}" alt="Rumput Teki">
+      <div class="slider-caption"><span>Rumput Teki (Cyperus rotundus)</span></div>
+      <img class="slider-image" src="{{ url_for('static', filename='images/gulma/bayamduri.jpeg') }}" alt="Bayam Duri">
+      <div class="slider-caption"><span>Bayam Duri (Amaranthus spinosus)</span></div>
+      <img class="slider-image active" src="{{ url_for('static', filename='images/gulma/babandotan.jpeg') }}" alt="Babandotan">
+      <div class="slider-caption"><span>Babandotan (Ageratum conyzoides)</span></div>
+      <img class="slider-image" src="{{ url_for('static', filename='images/gulma/jukutpendul.jpeg') }}" alt="Jukut Pendul">
+      <div class="slider-caption"><span>Jukut Pendul (Kyllinga Brevifolia)</span></div>
+      <img class="slider-image" src="{{ url_for('static', filename='images/gulma/rumputbelulang2.jpeg') }}" alt="Rumput Belulang">
+      <div class="slider-caption"><span>Rumput Belulang (Eleusine indica)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-strip">
+  <div class="marquee-inner">
+    <span class="marquee-item"><span class="dot"></span>Babandotan</span>
+    <span class="marquee-item"><span class="dot"></span>Rumput Teki</span>
+    <span class="marquee-item"><span class="dot"></span>Bayam Duri</span>
+    <span class="marquee-item"><span class="dot"></span>Rumput Belulang</span>
+    <span class="marquee-item"><span class="dot"></span>Jukut Pendul</span>
+    <span class="marquee-item"><span class="dot"></span>Identifikasi AI</span>
+    <span class="marquee-item"><span class="dot"></span>Babandotan</span>
+    <span class="marquee-item"><span class="dot"></span>Rumput Teki</span>
+    <span class="marquee-item"><span class="dot"></span>Bayam Duri</span>
+    <span class="marquee-item"><span class="dot"></span>Rumput Belulang</span>
+    <span class="marquee-item"><span class="dot"></span>Jukut Pendul</span>
+    <span class="marquee-item"><span class="dot"></span>Identifikasi AI</span>
+  </div>
+</div>
+
+<!-- LANDING SECTION (Apa Itu Gulma) -->
+<section class="landing" id="landing">
+  <div class="section-wrap">
+    <div class="landing-grid">
+      <div class="reveal">
+        <span class="section-label">Pengenalan</span>
+        <h2 class="section-h">Apa Itu Gulma<br>dan Mengapa Berbahaya?</h2>
+        <div class="pullquote">
+          <p>Gulma adalah tumbuhan liar yang tumbuh di sekitar tanaman budidaya dan dapat mengganggu pertumbuhan tanaman utama karena bersaing memperebutkan air, cahaya matahari, ruang tumbuh, dan unsur hara.</p>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="fact-list">
+          <div class="fact-item"><div class="fact-num">01</div><div class="fact-body"><h4>Menghambat Pertumbuhan</h4><p>Gulma bersaing langsung untuk mendapatkan air, mineral, dan cahaya matahari, menghambat pertumbuhan tanaman budidaya.</p></div></div>
+          <div class="fact-item"><div class="fact-num">02</div><div class="fact-body"><h4>Inang Hama dan Penyakit</h4><p>Beberapa gulma menjadi tempat hidup hama dan penyakit yang kemudian menyerang tanaman budidaya di sekitarnya.</p></div></div>
+          <div class="fact-item"><div class="fact-num">03</div><div class="fact-body"><h4>Penurunan Hasil Panen</h4><p>Keberadaan gulma yang tidak dikendalikan dapat menurunkan hasil produksi pertanian secara signifikan.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DAMPAK -->
+<section class="dampak" id="dampak">
+  <div class="section-wrap">
+    <div class="reveal"><span class="section-label">Mengapa Sulit Dikendalikan</span><h2 class="section-h">Rahasia Ketangguhan Gulma</h2></div>
+    <div class="dampak-grid">
+      <div class="dampak-card reveal"><div class="dampak-card-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><h3>Produksi Biji yang Masif</h3><p>Satu tanaman gulma mampu menghasilkan ribuan biji yang bertahan lama di dalam tanah dan berkecambah secara tidak terduga.</p></div>
+      <div class="dampak-card reveal"><div class="dampak-card-icon"><svg viewBox="0 0 24 24"><path d="M12 2C8 6 4 10 4 14a8 8 0 0016 0c0-4-4-8-8-12z"/><path d="M12 14v6"/></svg></div><h3>Perkembangbiakan Vegetatif</h3><p>Beberapa gulma seperti rumput teki berkembang melalui umbi dan rimpang di dalam tanah, sehingga sangat sulit diberantas.</p></div>
+      <div class="dampak-card reveal"><div class="dampak-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg></div><h3>Adaptasi Lingkungan Tinggi</h3><p>Gulma memiliki kemampuan adaptasi yang sangat tinggi terhadap berbagai kondisi tanah, iklim, dan metode pengendalian.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAKTOR -->
+<section class="faktor" id="faktor">
+  <div class="section-wrap">
+    <div class="reveal"><span class="section-label">Faktor Kemunculan</span><h2 class="section-h">Kondisi yang Memicu<br>Ledakan Populasi Gulma</h2></div>
+    <div class="faktor-grid">
+      <div class="faktor-list reveal">
+        <div class="faktor-item"><div class="faktor-dot"><svg viewBox="0 0 24 24"><path d="M12 22V12M12 12C12 7 7 4 7 4s2 5 5 8zM12 12c0-5 5-8 5-8s-2 5-5 8z"/></svg></div><div><h4>Jenis dan Kondisi Tanah</h4><p>Tanah dengan kandungan nitrogen tinggi mendorong pertumbuhan gulma berdaun lebar. Tanah yang sering terganggu memicu perkecambahan biji gulma.</p></div></div>
+        <div class="faktor-item"><div class="faktor-dot"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div><div><h4>Intensitas Cahaya Matahari</h4><p>Lahan yang kurang ternaungi memberi ruang bagi gulma untuk tumbuh subur karena ketersediaan cahaya yang melimpah.</p></div></div>
+        <div class="faktor-item"><div class="faktor-dot"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><div><h4>Sistem Pengairan</h4><p>Irigasi berlebihan atau genangan air menciptakan kondisi ideal bagi beberapa spesies gulma air dan teki-tekian.</p></div></div>
+        <div class="faktor-item"><div class="faktor-dot"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div><div><h4>Rotasi Tanaman</h4><p>Pola tanam yang monoton tanpa rotasi menyebabkan dominasi satu spesies gulma tertentu yang sulit dikendalikan.</p></div></div>
+        <div class="faktor-item"><div class="faktor-dot"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div><div><h4>Pengelolaan Lahan</h4><p>Cara pengolahan tanah, penggunaan mulsa, dan kepadatan tanaman budidaya mempengaruhi tingkat populasi gulma.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <div>
+    <div class="foot-brand">Gulma<em>ify</em></div>
+    <p class="foot-desc">Sistem identifikasi gulma berbasis kecerdasan buatan menggunakan model YOLOv8 untuk mendukung pertanian yang lebih produktif.</p>
+  </div>
+  <div class="foot-col">
+    <h4>Navigasi</h4>
+    <ul><li><a href="{{ url_for('beranda') }}">Beranda</a></li><li><a href="{{ url_for('kamera') }}">Identifikasi</a></li><li><a href="{{ url_for('riwayat') }}">Riwayat</a></li><li><a href="{{ url_for('forum') }}">Forum</a></li></ul>
+  </div>
+  <div class="foot-col">
+    <h4>Jenis Gulma</h4>
+    <ul><li><a href="#">Babandotan</a></li><li><a href="#">Rumput Teki</a></li><li><a href="#">Bayam Duri</a></li><li><a href="#">Rumput Belulang</a></li><li><a href="#">Jukut Pendul</a></li></ul>
+  </div>
+</footer>
+
+
+<script>
+// Slider otomatis
+const slides = document.querySelectorAll('.slider-image');
+let currentIndex = 0;
+const totalSlides = slides.length;
+function showSlide(index) {
+  slides.forEach((img, i) => {
+    img.classList.remove('active');
+    const caption = img.nextElementSibling;
+    if (caption && caption.classList.contains('slider-caption')) caption.style.opacity = '0';
+  });
+  slides[index].classList.add('active');
+  const nextCap = slides[index].nextElementSibling;
+  if (nextCap && nextCap.classList.contains('slider-caption')) nextCap.style.opacity = '1';
+}
+function nextSlide() {
+  currentIndex = (currentIndex + 1) % totalSlides;
+  showSlide(currentIndex);
+}
+if (slides.length) {
+  showSlide(0);
+  setInterval(nextSlide, 3000);
+}
+
+// Custom cursor
+const cur = document.getElementById('cursor'), ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+if(cur&&ring){
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+  (function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)})();
+  document.querySelectorAll('a,button,.dampak-card,.faktor-item').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cur.style.width='20px';cur.style.height='20px';ring.style.width='54px';ring.style.height='54px'});
+    el.addEventListener('mouseleave',()=>{cur.style.width='12px';cur.style.height='12px';ring.style.width='36px';ring.style.height='36px'});
+  });
+}
+
+// Navbar scroll
+const navEl=document.getElementById('navbar');
+window.addEventListener('scroll',()=>navEl.classList.toggle('scrolled',window.scrollY>40));
+
+// Mobile menu
+const hamburger=document.getElementById('hamburger'),mobileMenu=document.getElementById('mobileMenu'),menuOverlay=document.getElementById('menuOverlay');
+function openMenu(){hamburger.classList.add('open');mobileMenu.classList.add('show');menuOverlay.classList.add('show');document.body.style.overflow='hidden';}
+function closeMenu(){hamburger.classList.remove('open');mobileMenu.classList.remove('show');menuOverlay.classList.remove('show');document.body.style.overflow='';}
+hamburger.addEventListener('click',openMenu);
+menuOverlay.addEventListener('click',closeMenu);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+
+// Profile dropdown
+function toggleProfile(e){
+  e.stopPropagation();
+  document.getElementById('profileDropdown').classList.toggle('show');
+}
+document.addEventListener('click',()=>document.getElementById('profileDropdown').classList.remove('show'));
+
+// Reveal animations
+const reveals=document.querySelectorAll('.reveal');
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}}),{threshold:0.1});
+reveals.forEach(r=>obs.observe(r));
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+flask==2.3.3
+gunicorn==21.2.0
+ultralytics==8.0.200
+mysql-connector-python==8.1.0
+opencv-python-headless==4.8.1.78
+pillow==10.0.1
+werkzeug==2.3.7
+python-dotenv==1.0.0
+authlib==1.2.1
+requests==2.31.0

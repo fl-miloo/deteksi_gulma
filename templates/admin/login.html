@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Admin — Gulmaify</title>
+
+<!-- Fonts natural / farm style -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(145deg, #142C14 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+/* Decorative leaves */
+.bg-leaf {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.12;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.leaf-1 {
+    bottom: -80px;
+    left: -80px;
+    width: 280px;
+    height: 280px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='white' d='M50,10 C70,10 90,30 90,50 C90,70 70,90 50,90 C30,90 10,70 10,50 C10,30 30,10 50,10z'/%3E%3Cpath fill='none' stroke='white' stroke-width='2' d='M50,10 L50,90 M50,30 L30,50 M50,50 L70,70'/%3E%3C/svg%3E");
+    transform: rotate(-15deg);
+}
+.leaf-2 {
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='white' d='M50,10 C70,10 90,30 90,50 C90,70 70,90 50,90 C30,90 10,70 10,50 C10,30 30,10 50,10z'/%3E%3C/svg%3E");
+    transform: rotate(45deg);
+}
+.leaf-3 {
+    bottom: 10%;
+    right: 5%;
+    width: 150px;
+    height: 150px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='white' d='M50,10 C70,10 90,30 90,50 C90,70 70,90 50,90 C30,90 10,70 10,50 C10,30 30,10 50,10z'/%3E%3Cpath fill='none' stroke='white' stroke-width='2' d='M50,10 L50,90 M50,30 L30,50 M50,50 L70,70'/%3E%3C/svg%3E");
+    opacity: 0.08;
+}
+
+/* Main Card */
+.login-card {
+    position: relative;
+    z-index: 20;
+    background: rgba(255, 255, 240, 0.98);
+    border-radius: 42px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+    box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.35), 0 4px 0 0 #142C14;
+    backdrop-filter: blur(2px);
+    transition: transform 0.2s;
+    animation: slideUp 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Logo area */
+.logo-wrapper {
+    margin-bottom: 24px;
+}
+.logo-circle {
+    width: 100px;
+    height: 100px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    overflow: hidden;
+    padding: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.2);
+    animation: softPulse 2.2s infinite ease;
+}
+.logo-circle img {
+    width: 150%;
+    height: 180%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    transform: translateX(-2px) translateY(5px);
+}
+@keyframes softPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 125, 0.5), 0 8px 20px rgba(0,0,0,0.2); }
+    50% { box-shadow: 0 0 0 14px rgba(76, 175, 125, 0.15), 0 8px 20px rgba(0,0,0,0.2); }
+}
+
+/* Teks */
+h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #142C14;
+    margin-bottom: 8px;
+}
+h1 span {
+    color: #537B2F;
+    font-style: italic;
+}
+.subtitle {
+    font-size: 0.9rem;
+    color: #5a7a5c;
+    margin-bottom: 28px;
+    font-weight: 500;
+}
+
+/* Flash messages */
+.flash-message {
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    text-align: left;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+}
+.flash-message.success {
+    background: #e0f2e6;
+    color: #1a5c1e;
+    border-left: 4px solid #2d8a35;
+}
+.flash-message.danger {
+    background: #ffe6e5;
+    color: #b13b2d;
+    border-left: 4px solid #dc3545;
+}
+.flash-message.info {
+    background: #e6f2f5;
+    color: #1a6b8a;
+    border-left: 4px solid #17a2b8;
+}
+
+/* Tombol Google 3D */
+.btn-google {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #fff;
+    border: 2px solid #537B2F;
+    border-radius: 60px;
+    box-shadow: #537B2F 4px 4px 0 0;
+    color: #142C14;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: all 0.12s linear;
+    font-family: 'Instrument Sans', sans-serif;
+    margin-top: 16px;
+}
+.btn-google:hover {
+    background: #E4EB9C;
+    transform: translateY(-2px);
+    box-shadow: #537B2F 4px 6px 0 0;
+}
+.btn-google:active {
+    transform: translate(2px, 2px);
+    box-shadow: #537B2F 2px 2px 0 0;
+}
+.btn-google svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Info card (khusus admin) */
+.info-card {
+    margin-top: 32px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f0faf0, #e8f5e0);
+    border-radius: 24px;
+    border: 1.5px solid rgba(83,123,47,0.2);
+    text-align: left;
+    font-size: 0.8rem;
+    color: #2D5128;
+    line-height: 1.6;
+}
+.info-card strong {
+    display: block;
+    font-weight: 700;
+    color: #142C14;
+    margin-bottom: 6px;
+}
+.info-card p {
+    font-size: 0.8rem;
+    color: #4a6b4c;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+    .login-card {
+        padding: 32px 24px;
+        margin: 1px;
+    }
+    h1 {
+        font-size: 1.7rem;
+    }
+    .btn-google {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-leaf leaf-1"></div>
+<div class="bg-leaf leaf-2"></div>
+<div class="bg-leaf leaf-3"></div>
+
+<div class="login-card">
+    <div class="logo-wrapper">
+        <div class="logo-circle">
+            <img src="{{ url_for('static', filename='images/logo2.png') }}" alt="Logo Gulmaify">
+        </div>
+    </div>
+
+    <h1>Admin<span>Panel</span></h1>
+    <p class="subtitle">Masuk menggunakan akun Google yang terdaftar sebagai admin</p>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Tombol Google Login Admin -->
+    <a href="{{ url_for('admin_google_login') }}" class="btn-google">
+        <svg viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Login dengan Google (Admin)
+    </a>
+
+    <div class="info-card">
+        <strong>🔐 Akses Khusus Administrator</strong>
+        <p>Hanya email yang terdaftar sebagai admin yang dapat mengakses panel ini. Pastikan Anda menggunakan akun Google yang sudah didaftarkan ke sistem.</p>
+    </div>
+</div>
+
+</body>
+</html>

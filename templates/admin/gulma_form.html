@@ -1,0 +1,250 @@
+﻿{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Edit' if action=='edit' else 'Tambah' }} Gulma — Gulmaify Admin{% endblock %}
+{% block page_name %}{{ 'Edit' if action=='edit' else 'Tambah' }} Data Gulma{% endblock %}
+
+{% block head %}
+<style>
+  .foto-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .foto-slot{
+    aspect-ratio:1;
+    border-radius:10px;
+    overflow:hidden;
+    position:relative;
+    background:#f0f7f3;
+    border:2px dashed var(--border);
+    cursor:pointer;
+    transition:border .2s;
+  }
+  .foto-slot:hover{
+    border-color:var(--green-mid);
+  }
+  .foto-slot img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .foto-slot .overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+  }
+  .foto-slot:hover .overlay{
+    display:flex;
+  }
+  .foto-slot .add-icon{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    color:var(--text-light);
+  }
+  .foto-slot .add-icon svg{
+    width:28px;
+    height:28px;
+  }
+  .foto-slot .add-icon span{
+    font-size:.72rem;
+    font-weight:700;
+  }
+  .foto-slot.has-img .add-icon{
+    display:none;
+  }
+  .slot-num{
+    position:absolute;
+    top:5px;
+    left:5px;
+    background:rgba(0,0,0,.55);
+    color:#fff;
+    font-size:.62rem;
+    font-weight:800;
+    padding:2px 6px;
+    border-radius:5px;
+    z-index:2;
+  }
+  .btn-hapus-foto{
+    background:#dc3545;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    padding:5px 10px;
+    font-size:.75rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:720px">
+  <a href="{{ url_for('admin_gulma') }}" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-mid);font-weight:700;font-size:.88rem;margin-bottom:20px">← Kembali ke List</a>
+
+  <form method="POST" enctype="multipart/form-data" id="mainForm">
+    {% if action == 'edit' %}
+      <input type="hidden" name="id_gulma" value="{{ data.id_gulma }}">
+    {% endif %}
+
+    <!-- IDENTITAS -->
+    <div class="card">
+      <div class="card-title">Identitas Gulma</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Label Model (YOLO) <span style="color:red">*</span></label>
+          <input type="text" name="label_model" value="{{ data.label_model or '' }}" placeholder="misal: teki" required>
+          <small style="color:var(--text-mid);font-size:.78rem">Harus sama persis dengan nama kelas di file <strong>best.pt</strong></small>
+        </div>
+        <div class="form-group">
+          <label>Nama Umum (Indonesia)</label>
+          <input type="text" name="nama_umum" value="{{ data.nama_umum or '' }}" placeholder="misal: Rumput Teki">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nama Ilmiah (Latin)</label>
+        <input type="text" name="nama_latin" value="{{ data.nama_latin or '' }}" placeholder="misal: Cyperus rotundus">
+      </div>
+      <div class="form-group">
+        <label>Deskripsi Umum</label>
+        <textarea name="deskripsi_umum" placeholder="Deskripsikan gulma ini...">{{ data.deskripsi_umum or '' }}</textarea>
+      </div>
+    </div>
+
+    <!-- FOTO REFERENSI MULTI -->
+    <div class="card">
+      <div class="card-title">
+        Foto Referensi
+        <span style="font-size:.78rem;color:var(--text-mid);font-weight:400;margin-left:6px">(upload 2–5 foto, klik slot untuk pilih)</span>
+      </div>
+
+      <div class="foto-grid">
+        {% for i in range(5) %}
+        {% set foto_ada = foto_existing and i < foto_existing|length %}
+        <div class="foto-slot {% if foto_ada %}has-img{% endif %}" id="slot-{{ i }}" data-index="{{ i }}">
+          <span class="slot-num">{{ i+1 }}</span>
+          {% if foto_ada %}
+            <img id="preview{{ i }}" src="{{ url_for('static', filename='uploads/' + foto_existing[i].nama_file) }}">
+            <input type="hidden" name="foto_existing_{{ i }}" value="{{ foto_existing[i].id_foto }}">
+          {% else %}
+            <img id="preview{{ i }}" src="" style="display:none">
+          {% endif %}
+          <div class="add-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>Foto {{ i+1 }}</span>
+          </div>
+          <div class="overlay">
+            <button type="button" class="btn-hapus-foto" data-index="{{ i }}">Hapus</button>
+          </div>
+          <input type="file" id="finput{{ i }}" name="foto_baru_{{ i }}" accept="image/*" style="display:none" data-index="{{ i }}">
+        </div>
+        {% endfor %}
+      </div>
+
+      <p style="font-size:.8rem;color:var(--text-mid)">
+        Foto pertama (slot 1) akan menjadi foto utama. Upload dari berbagai sudut agar pengguna mudah membandingkan.
+      </p>
+      <div id="hapusList"></div>
+    </div>
+
+    <!-- KARAKTERISTIK -->
+    <div class="card">
+      <div class="card-title">Karakteristik</div>
+      <div class="form-row">
+        <div class="form-group"><label>Bentuk Daun</label><textarea name="bentuk_daun" rows="2">{{ data.bentuk_daun or '' }}</textarea></div>
+        <div class="form-group"><label>Warna Daun</label><textarea name="warna_daun" rows="2">{{ data.warna_daun or '' }}</textarea></div>
+        <div class="form-group"><label>Karakter Batang</label><textarea name="karakter_batang" rows="2">{{ data.karakter_batang or '' }}</textarea></div>
+        <div class="form-group"><label>Karakter Akar</label><textarea name="karakter_akar" rows="2">{{ data.karakter_akar or '' }}</textarea></div>
+      </div>
+      <div class="form-group"><label>Cara Berkembangbiak</label><textarea name="cara_berkembangbiak" rows="2">{{ data.cara_berkembangbiak or '' }}</textarea></div>
+    </div>
+
+    <!-- PENGENDALIAN -->
+    <div class="card">
+      <div class="card-title">Metode Pengendalian</div>
+      <div class="form-group"><label>Metode Mekanik</label><textarea name="metode_mekanik" rows="2">{{ data.metode_mekanik or '' }}</textarea></div>
+      <div class="form-group"><label>Metode Kimiawi</label><textarea name="metode_kimiawi" rows="2">{{ data.metode_kimiawi or '' }}</textarea></div>
+      <div class="form-group"><label>Waktu Pengendalian Terbaik</label><textarea name="waktu_kendali_terbaik" rows="2">{{ data.waktu_kendali_terbaik or '' }}</textarea></div>
+    </div>
+
+    <div style="display:flex;gap:12px;padding-bottom:24px">
+      <button type="submit" class="btn btn-primary">{{ 'Simpan Perubahan' if action=='edit' else 'Tambah Gulma' }}</button>
+      <a href="{{ url_for('admin_gulma') }}" class="btn btn-outline">Batal</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function previewFoto(index, input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.getElementById('preview' + index);
+    const slot = document.getElementById('slot-' + index);
+    if (!img || !slot) return;
+    img.src = e.target.result;
+    img.style.display = 'block';
+    slot.classList.add('has-img');
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function hapusFoto(index) {
+  const img = document.getElementById('preview' + index);
+  const slot = document.getElementById('slot-' + index);
+  const finput = document.getElementById('finput' + index);
+  if (img) {
+    img.src = '';
+    img.style.display = 'none';
+  }
+  if (slot) {
+    slot.classList.remove('has-img');
+  }
+  if (finput) {
+    finput.value = '';
+  }
+
+  const exInput = document.querySelector('input[name="foto_existing_' + index + '"]');
+  if (exInput) {
+    const idFoto = exInput.value;
+    exInput.remove();
+    const hapusList = document.getElementById('hapusList');
+    if (hapusList) {
+      hapusList.insertAdjacentHTML('beforeend', '<input type="hidden" name="hapus_foto" value="' + idFoto + '">');
+    }
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.foto-slot').forEach(slot => {
+    slot.addEventListener('click', function(e) {
+      if (e.target.closest('.btn-hapus-foto')) return;
+      const index = this.dataset.index;
+      const input = document.getElementById('finput' + index);
+      if (input) input.click();
+    });
+  });
+
+  document.querySelectorAll('input[type=file][data-index]').forEach(input => {
+    input.addEventListener('change', function() {
+      previewFoto(this.dataset.index, this);
+    });
+  });
+
+  document.querySelectorAll('.btn-hapus-foto').forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.stopPropagation();
+      hapusFoto(this.dataset.index);
+    });
+  });
+});
+</script>
+{% endblock %}

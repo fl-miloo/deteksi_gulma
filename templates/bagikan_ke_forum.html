@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bagikan ke Forum - Gulmaify</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0
+}
+
+:root{
+  --g1:#142C14;
+  --g2:#2D5128;
+  --g3:#537B2F;
+  --g4:#8DA750;
+  --g5:#E4EB9C;
+  --cream:#FFFAF0;
+  --cream2:#F2F4F5;
+  --gold:#FFB800;
+  --rust:#FF6D2D;
+  --dark:#0b1f0c;
+  --serif:'DM Serif Display','Fraunces',Georgia,serif;
+  --sans:'Instrument Sans','Quicksand',system-ui,sans-serif;
+  --shadow-green:0 8px 20px rgba(20,44,20,0.12);
+  --shadow-3d:0 4px 0 0 #142C14;
+}
+html{ scroll-behavior:smooth }
+body{
+  font-family:var(--sans);
+  background:var(--cream);
+  color:var(--g1);
+  overflow-x:hidden
+}
+
+/* custom cursor desktop */
+@media (pointer: fine) {
+  #cursor{
+    position:fixed;
+    width:12px;
+    height:12px;
+    background:var(--g3);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:transform 0.15s,width 0.2s,height 0.2s,background 0.2s;
+    mix-blend-mode:multiply
+  }
+  #cursor-ring{
+    position:fixed;
+    width:36px;
+    height:36px;
+    border:1.5px solid var(--g2);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9998;
+    transform:translate(-50%,-50%);
+    transition:transform 0.35s cubic-bezier(.25,.46,.45,.94),width 0.3s,height 0.3s,border-color 0.3s
+  }
+}
+@media (pointer: coarse) { 
+  #cursor, #cursor-ring { display: none; } 
+}
+
+/* ===== NAVBAR (sama dengan beranda) ===== */
+nav{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:500;
+  height:66px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 4%;
+  background:rgba(255,250,240,0.95);
+  backdrop-filter:blur(16px);
+  border-bottom:2px solid rgba(83,123,47,0.2);
+  box-shadow:0 2px 12px rgba(20,44,20,0.08);
+  transition:all 0.2s;
+}
+nav.scrolled{
+  background:rgba(255,250,240,0.98);
+  border-bottom-color:rgba(83,123,47,0.25);
+}
+.nav-logo{
+  font-family:var(--serif);
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--g1);
+  text-decoration:none;
+  letter-spacing:-0.03em;
+}
+.nav-logo em{
+  font-style:italic;
+  color:var(--g3);
+}
+.nav-links{
+  display:flex;
+  gap:2rem;
+  list-style:none;
+  align-items:center;
+}
+.nav-links a{
+  font-size:0.85rem;
+  color:var(--g2);
+  text-decoration:none;
+  font-weight:500;
+  transition:color 0.2s;
+  padding:6px 0;
+  border-bottom:2px solid transparent;
+}
+.nav-links a:hover{
+  color:var(--g3);
+}
+.nav-links a.active{
+  color:var(--g3);
+  border-bottom-color:var(--g3);
+}
+
+/* Profile dropdown gaya 3D */
+.profile-wrap{position:relative}
+.profile-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  padding:6px 12px;
+  border-radius:30px;
+  border:2px solid rgba(83,123,47,0.3);
+  background:transparent;
+  font-family:var(--sans);
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--g2);
+  box-shadow:#537B2F 3px 3px 0 0;
+  transition:all .15s;
+}
+.profile-btn:hover{background:#E4EB9C}
+.profile-btn:active{box-shadow:#537B2F 1px 1px 0 0;transform:translate(2px,2px)}
+.profile-btn img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.profile-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:.75rem;font-weight:700;
+}
+.profile-dropdown{
+  position:absolute;top:calc(100% + 10px);right:0;
+  background:#fff;border:2px solid rgba(83,123,47,0.2);
+  border-radius:20px;box-shadow:0 8px 32px rgba(20,44,20,0.15);
+  min-width:180px;overflow:hidden;display:none;z-index:600;
+}
+.profile-dropdown.show{display:block}
+.profile-dropdown a{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;color:var(--g1);
+  text-decoration:none;font-size:.85rem;font-weight:500;
+  transition:background .15s;
+}
+.profile-dropdown a:hover{background:var(--cream2)}
+.profile-dropdown .logout-link{
+  color:#dc3545;
+  border-top:1px solid rgba(83,123,47,.1);
+}
+
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  border:none;
+  background:transparent;
+  z-index:600;
+}
+.hamburger span{
+  display:block;
+  width:24px;
+  height:2px;
+  background:var(--g1);
+  border-radius:2px;
+  transition:all 0.3s;
+}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* MOBILE MENU (tanpa emoji) */
+.mobile-menu{
+  position:fixed;
+  top:0;
+  right:-280px;
+  width:280px;
+  height:100%;
+  background:#fff;
+  z-index:1000;
+  padding:70px 20px 20px;
+  transition:right 0.3s ease;
+  box-shadow:-5px 0 20px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  gap:0.5rem;
+}
+.mobile-menu.show{right:0}
+.mobile-menu a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  color:var(--g1);
+  font-weight:600;
+  border-radius:16px;
+  transition:background 0.2s;
+  text-decoration:none;
+  font-size:1rem;
+}
+.mobile-menu a:hover{background:var(--cream)}
+.mobile-menu a.active{
+  background:var(--g5);
+  color:var(--g2);
+}
+.mobile-menu hr{
+  margin:12px 0;
+  border:none;
+  border-top:1px solid #e0e8e2;
+}
+.menu-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  z-index:999;
+  display:none;
+}
+.menu-overlay.show{display:block}
+
+/* ===== BUTTON 3D ===== */
+.btn-primary, .btn-cta-white {
+  background:linear-gradient(135deg,#537B2F,#2D5128);
+  border:2px solid #142C14;
+  border-radius:30px;
+  box-shadow:#142C14 4px 4px 0 0;
+  color:#fff;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  font-size:0.9rem;
+  padding:10px 22px;
+  text-decoration:none;
+  transition:all 0.15s;
+  font-family:var(--sans);
+}
+.btn-primary:hover, .btn-cta-white:hover {
+  background:linear-gradient(135deg,#8DA750,#537B2F);
+  box-shadow:#142C14 4px 4px 0 0;
+  transform:translateY(-2px);
+}
+.btn-primary:active, .btn-cta-white:active {
+  box-shadow:#142C14 2px 2px 0 0;
+  transform:translate(2px,2px);
+}
+.btn-ghost {
+  color:var(--g2);
+  font-size:0.88rem;
+  font-weight:600;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  transition:gap 0.2s,color 0.2s;
+  background:transparent;
+  border:none;
+}
+.btn-ghost:hover{color:var(--g3);gap:0.8rem}
+.btn-cta-white{background:#fff;color:var(--g2);box-shadow:#142C14 4px 4px 0 0;border:2px solid #142C14}
+.btn-cta-white:hover{background:#E4EB9C;color:var(--g1)}
+
+/* MAIN CONTENT */
+.container{max-width:720px;margin:0 auto;padding:86px 4% 60px}
+.card{background:#fff;border-radius:28px;padding:32px;box-shadow:0 8px 32px rgba(20,44,20,0.12);border:2px solid rgba(83,123,47,0.08)}
+.card h1{font-family:var(--serif);font-size:1.8rem;margin-bottom:8px}
+.card p{color:#5a7a5c;margin-bottom:24px}
+
+/* DAFTAR GULMA */
+.gulma-list{background:#f8faf5;border-radius:20px;padding:16px;margin-bottom:24px;border:1.5px solid rgba(83,123,47,0.15)}
+.gulma-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #e0e8e2}
+.gulma-item:last-child{border-bottom:none}
+.gulma-nama{font-weight:700;color:var(--g1)}
+.gulma-conf{font-size:0.75rem;background:#e8f2e5;color:var(--g3);padding:4px 10px;border-radius:40px;font-weight:600}
+
+/* FORM */
+.form-group{margin-bottom:20px}
+label{font-weight:600;display:block;margin-bottom:8px;color:var(--g2)}
+input,textarea{width:100%;padding:12px 14px;border:1.5px solid #d4e8d6;border-radius:16px;font-family:var(--sans);font-size:0.9rem;transition:border-color 0.2s}
+input:focus,textarea:focus{outline:none;border-color:var(--g3)}
+textarea{resize:vertical;min-height:100px}
+.btn-group{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.btn-batal{background:#f0f4f0;color:var(--g2);padding:10px 24px;border-radius:40px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s}
+.btn-batal:hover{background:#e0e8e2}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hamburger{display:flex}
+  .nav-links{display:none}
+  .container{padding-top:80px}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- MOBILE SIDEBAR (tanpa emoji) -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('beranda') }}">Beranda</a>
+  <a href="{{ url_for('kamera') }}">Identifikasi</a>
+  <a href="{{ url_for('riwayat') }}">Riwayat</a>
+  <a href="{{ url_for('forum') }}">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_logout') }}">Keluar</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="{{ url_for('beranda') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('beranda') }}">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}">Identifikasi</a></li>
+    <li><a href="{{ url_for('riwayat') }}">Riwayat</a></li>
+    <li><a href="{{ url_for('forum') }}">Forum</a></li>
+    <li>
+      <div class="profile-wrap">
+        <button class="profile-btn" onclick="toggleProfile(event)">
+          {% if session.get('user_foto') %}
+          <img src="{{ session.get('user_foto') }}" alt="foto">
+          {% else %}
+          <div class="profile-avatar">{{ session.get('user_nama','U')[0]|upper }}</div>
+          {% endif %}
+          {{ session.get('user_nama','').split(' ')[0] }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <a href="{{ url_for('riwayat') }}">Riwayat Saya</a>
+          <a href="{{ url_for('user_logout') }}" class="logout-link">Keluar</a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h1>Bagikan ke Forum</h1>
+    <p>Edit judul dan deskripsi sebelum dibagikan ke komunitas. Semua gulma yang terdeteksi akan disertakan.</p>
+
+    <!-- Daftar semua gulma yang terdeteksi dalam sesi ini -->
+    <div class="gulma-list">
+      {% for d in deteksi_list %}
+      <div class="gulma-item">
+        <span class="gulma-nama">{{ d.nama_umum or d.label_ai|replace('_',' ') }}</span>
+        <span class="gulma-conf">Confidence: {{ (d.confidence_score * 100)|round(1) }}%</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <form method="POST">
+      <div class="form-group">
+        <label>Judul Diskusi</label>
+        <input type="text" name="judul" value="Hasil deteksi: {{ deteksi_list|map(attribute='nama_umum')|select('defined')|list|join(', ') or deteksi_list|map(attribute='label_ai')|list|join(', ') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Deskripsi</label>
+        <textarea name="deskripsi" rows="3" placeholder="Tanyakan pendapat komunitas...">Saya mendeteksi beberapa gulma: {% for d in deteksi_list %}{{ d.nama_umum or d.label_ai|replace('_',' ') }} (confidence {{ (d.confidence_score * 100)|round(1) }}%){% if not loop.last %}, {% endif %}{% endfor %}. Apakah identifikasi ini benar? Ada yang tahu cara mengendalikannya?</textarea>
+      </div>
+      <div class="btn-group">
+        <button type="submit" class="btn-primary">Bagikan Sekarang</button>
+        <a href="{{ url_for('riwayat') }}" class="btn-batal">Batal</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Custom cursor
+const cur = document.getElementById('cursor'), ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+if(cur&&ring){
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+  (function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)})();
+  document.querySelectorAll('a,button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cur.style.width='20px';cur.style.height='20px';ring.style.width='54px';ring.style.height='54px'});
+    el.addEventListener('mouseleave',()=>{cur.style.width='12px';cur.style.height='12px';ring.style.width='36px';ring.style.height='36px'});
+  });
+}
+
+// Navbar scroll
+const navEl=document.getElementById('navbar');
+window.addEventListener('scroll',()=>navEl.classList.toggle('scrolled',window.scrollY>40));
+
+// Mobile menu
+const hamburger=document.getElementById('hamburger'),mobileMenu=document.getElementById('mobileMenu'),menuOverlay=document.getElementById('menuOverlay');
+function openMenu(){hamburger.classList.add('open');mobileMenu.classList.add('show');menuOverlay.classList.add('show');document.body.style.overflow='hidden';}
+function closeMenu(){hamburger.classList.remove('open');mobileMenu.classList.remove('show');menuOverlay.classList.remove('show');document.body.style.overflow='';}
+hamburger.addEventListener('click',openMenu);
+menuOverlay.addEventListener('click',closeMenu);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+
+// Profile dropdown
+function toggleProfile(e){
+  e.stopPropagation();
+  document.getElementById('profileDropdown').classList.toggle('show');
+}
+document.addEventListener('click',()=>document.getElementById('profileDropdown').classList.remove('show'));
+</script>
+</body>
+</html>

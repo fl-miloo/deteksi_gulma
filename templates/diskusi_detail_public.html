@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{ post.judul }} - Gulmaify</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --g1:#142C14;
+  --g2:#2D5128;
+  --g3:#537B2F;
+  --g4:#8DA750;
+  --g5:#E4EB9C;
+  --cream:#FFFAF0;
+  --cream2:#F2F4F5;
+  --gold:#FFB800;
+  --rust:#FF6D2D;
+  --dark:#0b1f0c;
+  --serif:'DM Serif Display','Fraunces',Georgia,serif;
+  --sans:'Instrument Sans','Quicksand',system-ui,sans-serif;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  font-family:var(--sans);
+  background:var(--cream);
+  color:var(--g1);
+  overflow-x:hidden;
+}
+
+/* ================= CURSOR ================= */
+
+@media (pointer: fine){
+
+  #cursor{
+    position:fixed;
+    width:12px;
+    height:12px;
+    background:var(--g3);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:transform .15s,width .2s,height .2s,background .2s;
+    mix-blend-mode:multiply;
+  }
+
+  #cursor-ring{
+    position:fixed;
+    width:36px;
+    height:36px;
+    border:1.5px solid var(--g2);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:9998;
+    transform:translate(-50%,-50%);
+    transition:
+      transform .35s cubic-bezier(.25,.46,.45,.94),
+      width .3s,
+      height .3s,
+      border-color .3s;
+  }
+}
+
+@media (pointer: coarse){
+  #cursor,
+  #cursor-ring{
+    display:none;
+  }
+}
+
+/* ================= NAVBAR ================= */
+
+nav{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:500;
+
+  height:66px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 4%;
+
+  background:rgba(255,250,240,0.95);
+  backdrop-filter:blur(16px);
+
+  border-bottom:2px solid rgba(83,123,47,0.2);
+
+  box-shadow:0 2px 12px rgba(20,44,20,0.08);
+
+  transition:all .2s;
+}
+
+nav.scrolled{
+  background:rgba(255,250,240,0.98);
+  border-bottom-color:rgba(83,123,47,0.25);
+}
+
+.nav-logo{
+  font-family:var(--serif);
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--g1);
+  text-decoration:none;
+  letter-spacing:-0.03em;
+}
+
+.nav-logo em{
+  font-style:italic;
+  color:var(--g3);
+}
+
+.nav-links{
+  display:flex;
+  gap:2rem;
+  list-style:none;
+  align-items:center;
+}
+
+.nav-links a{
+  font-size:0.85rem;
+  color:var(--g2);
+  text-decoration:none;
+  font-weight:500;
+  transition:color .2s;
+  padding:6px 0;
+  border-bottom:2px solid transparent;
+}
+
+.nav-links a:hover{
+  color:var(--g3);
+}
+
+.nav-links a.active{
+  color:var(--g3);
+  border-bottom-color:var(--g3);
+}
+
+.btn-nav{
+  background:linear-gradient(135deg,#537B2F,#2D5128)!important;
+  border:2px solid #142C14;
+  border-radius:30px;
+  box-shadow:#142C14 3px 3px 0 0;
+  color:#fff!important;
+  padding:7px 18px!important;
+  font-weight:600;
+  font-size:0.82rem;
+  transition:all .15s;
+}
+
+.btn-nav:hover{
+  background:linear-gradient(135deg,#8DA750,#537B2F)!important;
+  transform:translateY(-1px);
+}
+
+.btn-nav:active{
+  box-shadow:#142C14 1px 1px 0 0;
+  transform:translate(2px,2px);
+}
+
+/* ================= MOBILE ================= */
+
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  border:none;
+  background:transparent;
+  z-index:600;
+}
+
+.hamburger span{
+  display:block;
+  width:24px;
+  height:2px;
+  background:var(--g1);
+  border-radius:2px;
+  transition:all .3s;
+}
+
+.hamburger.open span:nth-child(1){
+  transform:translateY(7px) rotate(45deg);
+}
+
+.hamburger.open span:nth-child(2){
+  opacity:0;
+  transform:scaleX(0);
+}
+
+.hamburger.open span:nth-child(3){
+  transform:translateY(-7px) rotate(-45deg);
+}
+
+.mobile-menu{
+  position:fixed;
+  top:0;
+  right:-280px;
+
+  width:280px;
+  height:100%;
+
+  background:#fff;
+
+  z-index:1000;
+
+  padding:70px 20px 20px;
+
+  transition:right .3s ease;
+
+  box-shadow:-5px 0 20px rgba(0,0,0,0.1);
+
+  display:flex;
+  flex-direction:column;
+  gap:.5rem;
+}
+
+.mobile-menu.show{
+  right:0;
+}
+
+.mobile-menu a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  padding:14px 16px;
+
+  color:var(--g1);
+
+  font-weight:600;
+
+  border-radius:16px;
+
+  transition:background .2s;
+
+  text-decoration:none;
+
+  font-size:1rem;
+}
+
+.mobile-menu a:hover{
+  background:var(--cream);
+}
+
+.mobile-menu a.active{
+  background:var(--g5);
+  color:var(--g2);
+}
+
+.mobile-menu hr{
+  margin:12px 0;
+  border:none;
+  border-top:1px solid #e0e8e2;
+}
+
+.mobile-menu .btn-mobile-cta{
+  background:linear-gradient(135deg,#537B2F,#2D5128);
+  border:2px solid #142C14;
+  border-radius:30px;
+  box-shadow:#142C14 3px 3px 0 0;
+  color:#fff;
+  justify-content:center;
+  padding:10px 16px;
+  font-weight:600;
+  font-size:0.85rem;
+}
+
+.menu-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+
+  width:100%;
+  height:100%;
+
+  background:rgba(0,0,0,0.5);
+
+  z-index:999;
+
+  display:none;
+}
+
+.menu-overlay.show{
+  display:block;
+}
+
+/* ================= CONTENT ================= */
+
+.detail-container{
+  max-width:1000px;
+  margin:0 auto;
+  padding:86px 4% 60px;
+}
+
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+
+  margin-bottom:24px;
+
+  color:var(--g3);
+
+  text-decoration:none;
+  font-weight:600;
+  font-size:0.9rem;
+
+  background:rgba(83,123,47,0.08);
+
+  padding:8px 16px;
+
+  border-radius:30px;
+
+  border:1.5px solid rgba(83,123,47,0.2);
+
+  transition:all .15s;
+}
+
+.back-link:hover{
+  background:#E4EB9C;
+}
+
+/* ================= GUEST BANNER ================= */
+
+.guest-banner{
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  background:linear-gradient(135deg,#f0faf0,#e8f5e0);
+
+  border:1.5px solid rgba(83,123,47,0.25);
+
+  border-radius:20px;
+
+  padding:14px 20px;
+
+  margin-bottom:24px;
+}
+
+.guest-banner .banner-icon{
+  font-size:1.6rem;
+  flex-shrink:0;
+}
+
+.guest-banner .banner-text{
+  flex:1;
+  font-size:0.85rem;
+  color:var(--g2);
+  line-height:1.5;
+}
+
+.guest-banner .banner-text strong{
+  display:block;
+  font-size:0.95rem;
+  color:var(--g1);
+  margin-bottom:2px;
+}
+
+.guest-banner .btn-login-small{
+  background:linear-gradient(135deg,#537B2F,#2D5128);
+
+  border:2px solid #142C14;
+
+  border-radius:30px;
+
+  box-shadow:#142C14 3px 3px 0 0;
+
+  color:#fff;
+
+  text-decoration:none;
+
+  padding:8px 18px;
+
+  font-weight:700;
+
+  font-size:0.82rem;
+
+  white-space:nowrap;
+
+  transition:all .15s;
+
+  flex-shrink:0;
+}
+
+.guest-banner .btn-login-small:hover{
+  background:linear-gradient(135deg,#8DA750,#537B2F);
+  transform:translateY(-1px);
+}
+
+.guest-banner .btn-login-small:active{
+  box-shadow:#142C14 1px 1px 0 0;
+  transform:translate(2px,2px);
+}
+
+/* ================= IMAGE ================= */
+
+.img-gallery{
+  display:flex;
+  gap:16px;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+}
+
+.img-card{
+  flex:1;
+  min-width:200px;
+
+  background:#fff;
+
+  border-radius:20px;
+
+  overflow:hidden;
+
+  box-shadow:0 4px 16px rgba(20,44,20,0.1);
+
+  border:2px solid rgba(83,123,47,0.1);
+}
+
+.img-card-header{
+  padding:12px 16px;
+
+  background:linear-gradient(135deg,var(--g2),var(--g3));
+
+  color:#fff;
+
+  font-size:0.8rem;
+  font-weight:700;
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.img-card img{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+/* ================= MAP ================= */
+
+.location-section{
+  background:#fff;
+
+  border-radius:24px;
+
+  padding:20px;
+
+  margin-bottom:24px;
+
+  box-shadow:0 4px 16px rgba(20,44,20,0.08);
+
+  border:2px solid rgba(83,123,47,0.1);
+}
+
+.location-section h3{
+  font-family:var(--serif);
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--g1);
+
+  margin-bottom:4px;
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.location-section .loc-meta{
+  font-size:0.8rem;
+  color:#5a7a5c;
+
+  margin-bottom:14px;
+
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.loc-badge{
+  background:#e8f2e5;
+  color:var(--g3);
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:0.72rem;
+  font-weight:600;
+}
+
+#detail-map{
+  height:280px;
+  border-radius:16px;
+  overflow:hidden;
+  border:2px solid rgba(83,123,47,0.15);
+}
+
+.loc-address{
+  background:linear-gradient(135deg,#f0faf0,#e8f5e0);
+
+  border-radius:14px;
+
+  padding:12px 16px;
+
+  margin-top:14px;
+
+  font-size:0.82rem;
+
+  color:var(--g2);
+
+  line-height:1.6;
+
+  border:1.5px solid rgba(83,123,47,0.15);
+}
+
+.loc-address strong{
+  color:var(--g1);
+  font-size:0.88rem;
+  display:block;
+  margin-bottom:4px;
+}
+
+/* ================= CARD ================= */
+
+.gulma-card{
+  background:#fff;
+
+  border-radius:24px;
+
+  padding:24px;
+
+  margin-bottom:24px;
+
+  box-shadow:0 4px 20px rgba(20,44,20,0.08);
+
+  border:2px solid rgba(83,123,47,0.1);
+}
+
+.gulma-card-header{
+  background:linear-gradient(135deg,#f0faf0,#e8f5e0);
+
+  border-radius:16px;
+
+  padding:16px 20px;
+
+  margin-bottom:20px;
+
+  border:1.5px solid rgba(83,123,47,0.15);
+}
+
+.gulma-title{
+  font-family:var(--serif);
+  font-size:1.5rem;
+  color:var(--g1);
+  font-weight:900;
+  margin-bottom:4px;
+}
+
+.gulma-latin{
+  font-style:italic;
+  color:#7a9c7e;
+  font-size:0.9rem;
+  margin-bottom:12px;
+}
+
+.conf-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+
+  background:linear-gradient(135deg,var(--g3),var(--g4));
+
+  color:#fff;
+
+  padding:5px 14px;
+
+  border-radius:20px;
+
+  font-size:0.75rem;
+  font-weight:700;
+
+  box-shadow:0 2px 8px rgba(83,123,47,0.3);
+}
+
+.info-section{
+  margin:16px 0;
+}
+
+.info-section h3{
+  font-size:0.95rem;
+  font-weight:700;
+  color:var(--g2);
+
+  margin-bottom:10px;
+
+  padding:8px 14px;
+
+  background:linear-gradient(
+    135deg,
+    rgba(83,123,47,0.08),
+    rgba(141,167,80,0.05)
+  );
+
+  border-radius:10px;
+
+  border-left:4px solid var(--g3);
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.info-section p{
+  font-size:0.85rem;
+  color:#4a6b4c;
+  line-height:1.7;
+  padding:0 4px;
+}
+
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin:10px 0;
+}
+
+.karakter-item{
+  background:linear-gradient(135deg,#f8fcf0,#f0faf0);
+
+  padding:12px 16px;
+
+  border-radius:14px;
+
+  border:1.5px solid rgba(83,123,47,0.1);
+}
+
+.karakter-label{
+  font-size:0.68rem;
+  font-weight:700;
+  color:var(--g3);
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  margin-bottom:4px;
+}
+
+.karakter-val{
+  font-size:0.85rem;
+  color:var(--g1);
+  font-weight:500;
+}
+
+/* ================= COMMENT ================= */
+
+.comment-section{
+  margin-top:40px;
+
+  background:#fff;
+
+  border-radius:24px;
+
+  padding:24px;
+
+  box-shadow:0 4px 20px rgba(20,44,20,0.08);
+
+  border:2px solid rgba(83,123,47,0.1);
+}
+
+.comment-section h3{
+  font-family:var(--serif);
+  font-size:1.4rem;
+  margin-bottom:20px;
+}
+
+.comment-list{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.comment-item{
+  background:#fff;
+
+  border-radius:20px;
+
+  padding:18px;
+
+  border:1px solid #e0e8e2;
+}
+
+.comment-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.comment-user{
+  font-weight:700;
+  color:var(--g1);
+}
+
+.comment-date{
+  font-size:.7rem;
+  color:#9ab09e;
+  margin-left:6px;
+}
+
+.comment-text{
+  color:#5a7a5c;
+  line-height:1.6;
+  font-size:0.88rem;
+}
+
+.empty-comments{
+  color:#7a9c7e;
+  text-align:center;
+  padding:20px;
+}
+
+/* ================= LOGIN COMMENT ================= */
+
+.login-prompt-comment{
+  background:var(--g1);
+
+  border-radius:22px;
+
+  padding:28px 24px;
+
+  text-align:center;
+
+  margin-bottom:24px;
+
+  border:2px solid rgba(141,167,80,0.3);
+
+  box-shadow:0 8px 24px rgba(0,0,0,0.12);
+}
+
+.login-prompt-comment p{
+  color:rgba(255,255,255,0.88);
+
+  margin-bottom:18px;
+
+  font-size:0.92rem;
+
+  font-weight:500;
+
+  line-height:1.5;
+}
+
+.login-prompt-comment .btn-login-cta{
+  background:#fff;
+
+  color:var(--g2);
+
+  padding:11px 26px;
+
+  border-radius:40px;
+
+  text-decoration:none;
+
+  font-weight:700;
+
+  font-size:0.88rem;
+
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+
+  box-shadow:#142C14 3px 3px 0 0;
+
+  border:2px solid #142C14;
+
+  transition:all .2s;
+}
+
+.login-prompt-comment .btn-login-cta:hover{
+  background:var(--g5);
+  transform:translateY(-2px);
+  box-shadow:#142C14 4px 4px 0 0;
+}
+
+.login-prompt-comment .btn-login-cta:active{
+  transform:translate(2px,2px);
+  box-shadow:#142C14 2px 2px 0 0;
+}
+
+.readonly-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+
+  background:rgba(255,184,0,0.12);
+
+  color:#a07800;
+
+  border:1.5px solid rgba(255,184,0,0.3);
+
+  border-radius:20px;
+
+  padding:4px 12px;
+
+  font-size:0.72rem;
+  font-weight:700;
+
+  margin-bottom:16px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:768px){
+
+  .hamburger{
+    display:flex;
+  }
+
+  .nav-links{
+    display:none;
+  }
+
+  .grid-2{
+    grid-template-columns:1fr;
+  }
+
+  .img-gallery{
+    flex-direction:column;
+  }
+
+  .detail-container{
+    padding-top:80px;
+  }
+
+  .guest-banner{
+    flex-direction:column;
+    text-align:center;
+    gap:10px;
+  }
+
+  .guest-banner .btn-login-small{
+    width:100%;
+    justify-content:center;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('landing') }}">Beranda</a>
+  <a href="{{ url_for('kamera') }}">Identifikasi</a>
+  <a href="{{ url_for('forum') }}" class="active">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_login') }}" class="btn-mobile-cta">Masuk</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<nav id="navbar">
+  <a href="{{ url_for('landing') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('landing') }}">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}">Identifikasi</a></li>
+    <li><a href="{{ url_for('forum') }}" class="active">Forum</a></li>
+    <li><a href="{{ url_for('user_login') }}" class="btn-nav">Masuk</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="detail-container">
+
+  <a href="{{ url_for('forum') }}" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Kembali ke Forum
+  </a>
+
+  <div class="img-gallery">
+    {% if post.foto_upload %}
+    <div class="img-card">
+      <div class="img-card-header">Foto Asli</div>
+      <img src="{{ url_for('static', filename='uploads/' + post.foto_upload) }}" alt="Foto asli">
+    </div>
+    {% endif %}
+    {% if post.foto_annotasi %}
+    <div class="img-card">
+      <div class="img-card-header">Hasil Anotasi AI</div>
+      <img src="{{ url_for('static', filename='uploads/' + post.foto_annotasi) }}" alt="Hasil anotasi">
+    </div>
+    {% endif %}
+    {% if post.foto_post and not post.foto_upload %}
+    <div class="img-card">
+      <div class="img-card-header">Foto Postingan</div>
+      <img src="{{ url_for('static', filename='uploads/' + post.foto_post) }}" alt="Foto postingan">
+    </div>
+    {% endif %}
+  </div>
+
+  {% if post.lokasi_lat and post.lokasi_lng %}
+  <div class="location-section">
+    <h3>Lokasi Penemuan</h3>
+    <div class="loc-meta">
+      {% if post.lokasi_kota %}<span class="loc-badge">{{ post.lokasi_kota }}</span>{% endif %}
+      {% if post.lokasi_provinsi %}<span class="loc-badge">{{ post.lokasi_provinsi }}</span>{% endif %}
+      <span style="font-size:0.75rem;color:#9ab09e">{{ post.lokasi_lat|round(6) }}, {{ post.lokasi_lng|round(6) }}</span>
+    </div>
+    <div id="detail-map"></div>
+    {% if post.lokasi_alamat %}
+    <div class="loc-address">
+      <strong>Alamat:</strong> {{ post.lokasi_alamat }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if deteksi_sesi %}
+    {% for gulma in deteksi_sesi %}
+    <div class="gulma-card">
+      <div class="gulma-card-header">
+        <div class="gulma-title">{{ gulma.nama_umum or gulma.label_ai|replace('_',' ') }}</div>
+        <div class="gulma-latin">{{ gulma.nama_latin or 'Nama latin belum tersedia' }}</div>
+        <span class="conf-badge">Confidence: {{ (gulma.confidence_score * 100)|round(1) }}%</span>
+      </div>
+      <div class="info-section"><h3>Deskripsi Umum</h3><p>{{ gulma.deskripsi_umum or 'Informasi belum tersedia.' }}</p></div>
+      <div class="info-section"><h3>Karakteristik</h3>
+        <div class="grid-2">
+          <div class="karakter-item"><div class="karakter-label">Bentuk Daun</div><div class="karakter-val">{{ gulma.bentuk_daun or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Warna Daun</div><div class="karakter-val">{{ gulma.warna_daun or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Batang</div><div class="karakter-val">{{ gulma.karakter_batang or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Akar</div><div class="karakter-val">{{ gulma.karakter_akar or '—' }}</div></div>
+        </div>
+      </div>
+      <div class="info-section"><h3>Cara Perkembangbiakan</h3><p>{{ gulma.cara_berkembangbiak or 'Informasi belum tersedia.' }}</p></div>
+      <div class="info-section"><h3>Metode Pengendalian</h3>
+        <div class="grid-2">
+          <div class="karakter-item"><div class="karakter-label">Waktu Terbaik</div><div class="karakter-val">{{ gulma.waktu_kendali_terbaik or '—' }}</div></div>
+          <div class="karakter-item"><div class="karakter-label">Mekanik</div><div class="karakter-val">{{ gulma.metode_mekanik or '—' }}</div></div>
+          <div class="karakter-item" style="grid-column:1/-1"><div class="karakter-label">Kimiawi</div><div class="karakter-val">{{ gulma.metode_kimiawi or '—' }}</div></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  {% elif post.label_ai %}
+  <div class="gulma-card">
+    <div class="gulma-card-header">
+      <div class="gulma-title">{{ post.nama_umum or post.label_ai|replace('_',' ') }}</div>
+      <div class="gulma-latin">{{ post.nama_latin or '-' }}</div>
+      <span class="conf-badge">Confidence: {{ (post.confidence_score * 100)|round(1) }}%</span>
+    </div>
+    <div class="info-section"><h3>Deskripsi Umum</h3><p>{{ post.deskripsi_umum or 'Informasi gulma belum tersedia.' }}</p></div>
+    <div class="info-section"><h3>Karakteristik</h3>
+      <div class="grid-2">
+        <div class="karakter-item"><div class="karakter-label">Bentuk Daun</div><div class="karakter-val">{{ post.bentuk_daun or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Warna Daun</div><div class="karakter-val">{{ post.warna_daun or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Batang</div><div class="karakter-val">{{ post.karakter_batang or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Akar</div><div class="karakter-val">{{ post.karakter_akar or '-' }}</div></div>
+      </div>
+    </div>
+    <div class="info-section"><h3>Cara Perkembangbiakan</h3><p>{{ post.cara_berkembangbiak or 'Informasi belum tersedia.' }}</p></div>
+    <div class="info-section"><h3>Pengendalian</h3>
+      <div class="grid-2">
+        <div class="karakter-item"><div class="karakter-label">Waktu Terbaik</div><div class="karakter-val">{{ post.waktu_kendali_terbaik or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Metode Mekanik</div><div class="karakter-val">{{ post.metode_mekanik or '-' }}</div></div>
+        <div class="karakter-item"><div class="karakter-label">Metode Kimiawi</div><div class="karakter-val">{{ post.metode_kimiawi or '-' }}</div></div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="gulma-card">
+    <div class="gulma-card-header">
+      <div class="gulma-title">Diskusi Umum</div>
+      <div class="gulma-latin">—</div>
+    </div>
+    <div class="info-section"><h3>Deskripsi</h3><p>{{ post.deskripsi or 'Tidak ada deskripsi.' }}</p></div>
+  </div>
+  {% endif %}
+
+  <div class="comment-section">
+    <h3>Komentar ({{ comments|length }})</h3>
+
+    <div class="login-prompt-comment">
+      <p>Ingin ikut berdiskusi dan memberikan komentar?<br>Login dengan Google untuk berpartisipasi dalam forum komunitas.</p>
+      <a href="{{ url_for('user_login') }}" class="btn-login-cta">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Login dengan Google
+      </a>
+    </div>
+
+    <div class="readonly-badge"> Mode baca saja — login untuk berkomentar</div>
+
+    <div class="comment-list">
+      {% for komentar in comments %}
+      <div class="comment-item">
+        <div class="comment-header">
+          {% if komentar.user_foto %}
+          <img src="{{ komentar.user_foto }}" style="width:32px;height:32px;border-radius:50%;object-fit:cover" alt="foto">
+          {% else %}
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--g3);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0">{{ komentar.user_nama[0]|upper }}</div>
+          {% endif %}
+          <div>
+            <span class="comment-user">{{ komentar.user_nama }}</span>
+            <span class="comment-date">{{ komentar.tgl_komentar.strftime('%d %b %Y, %H:%M') if komentar.tgl_komentar else '' }}</span>
+          </div>
+        </div>
+        <div class="comment-text">{{ komentar.isi_komentar }}</div>
+        {% if komentar.foto_komentar %}
+        <img src="{{ url_for('static', filename='uploads/' + komentar.foto_komentar) }}" style="max-width:200px;border-radius:12px;margin-top:8px" alt="foto komentar">
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="empty-comments">Belum ada komentar. Login untuk menjadi yang pertama!</p>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+  var hasLokasi = {{ 'true' if post.lokasi_lat and post.lokasi_lng else 'false' }};
+  var lat = {{ post.lokasi_lat if post.lokasi_lat else 'null' }};
+  var lng = {{ post.lokasi_lng if post.lokasi_lng else 'null' }};
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (hasLokasi && lat !== null && lng !== null) {
+      var map = L.map('detail-map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      var icon = L.divIcon({
+        html: '<div style="background:linear-gradient(135deg,#537B2F,#2D5128);width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,0.3)"><div style="transform:rotate(45deg);text-align:center;line-height:30px;font-size:14px">🌿</div></div>',
+        className: '', iconSize: [36,36], iconAnchor: [18,36]
+      });
+      L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup('Lokasi gulma ditemukan').openPopup();
+    }
+
+    var navEl = document.getElementById('navbar');
+    window.addEventListener('scroll', function() {
+      navEl.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    var hamburger = document.getElementById('hamburger');
+    var mobileMenu = document.getElementById('mobileMenu');
+    var menuOverlay = document.getElementById('menuOverlay');
+    function openMenu() {
+      hamburger.classList.add('open');
+      mobileMenu.classList.add('show');
+      menuOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+      hamburger.classList.remove('open');
+      mobileMenu.classList.remove('show');
+      menuOverlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    hamburger.addEventListener('click', openMenu);
+    menuOverlay.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMenu(); });
+
+    var cur = document.getElementById('cursor');
+    var ring = document.getElementById('cursor-ring');
+    var mx = 0, my = 0, rx = 0, ry = 0;
+    if (cur && ring) {
+      document.addEventListener('mousemove', function(e) {
+        mx = e.clientX; my = e.clientY;
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+      });
+      (function animRing() {
+        rx += (mx - rx) * 0.12;
+        ry += (my - ry) * 0.12;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(animRing);
+      })();
+      var elems = document.querySelectorAll('a, button, .forum-card');
+      for (var i = 0; i < elems.length; i++) {
+        elems[i].addEventListener('mouseenter', function() {
+          cur.style.width = '20px';
+          cur.style.height = '20px';
+          ring.style.width = '54px';
+          ring.style.height = '54px';
+        });
+        elems[i].addEventListener('mouseleave', function() {
+          cur.style.width = '12px';
+          cur.style.height = '12px';
+          ring.style.width = '36px';
+          ring.style.height = '36px';
+        });
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

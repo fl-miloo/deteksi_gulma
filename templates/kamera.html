@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Identifikasi Gulma — Gulmaify</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g1:#142C14;--g2:#2D5128;--g3:#537B2F;--g4:#8DA750;--g5:#E4EB9C;
+  --cream:#FFFAF0;--cream2:#F2F4F5;--dark:#0b1f0c;
+  --gold:#FFB800;--orange:#FF6D2D;
+  --serif:'DM Serif Display','Fraunces',Georgia,serif;
+  --sans:'Instrument Sans','Quicksand',system-ui,sans-serif;
+  --shadow-green: 0 4px 20px rgba(20,44,20,0.18);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--cream);color:var(--g1);min-height:100vh}
+
+/* ===== NAVBAR (sama dengan beranda) ===== */
+nav{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:500;
+  height:66px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 4%;
+  background:rgba(255,250,240,0.95);
+  backdrop-filter:blur(16px);
+  border-bottom:2px solid rgba(83,123,47,0.2);
+  box-shadow:0 2px 12px rgba(20,44,20,0.08);
+  transition:all 0.2s;
+}
+nav.scrolled{
+  background:rgba(255,250,240,0.98);
+  border-bottom-color:rgba(83,123,47,0.25);
+}
+.nav-logo{
+  font-family:var(--serif);
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--g1);
+  text-decoration:none;
+  letter-spacing:-0.03em;
+}
+.nav-logo em{
+  font-style:italic;
+  color:var(--g3);
+}
+.nav-links{
+  display:flex;
+  gap:2rem;
+  list-style:none;
+  align-items:center;
+}
+.nav-links a{
+  font-size:0.85rem;
+  color:var(--g2);
+  text-decoration:none;
+  font-weight:500;
+  transition:color 0.2s;
+  padding:6px 0;
+  border-bottom:2px solid transparent;
+}
+.nav-links a:hover{
+  color:var(--g3);
+}
+.nav-links a.active{
+  color:var(--g3);
+  border-bottom-color:var(--g3);
+}
+
+/* Profile dropdown (sama seperti beranda) */
+.profile-wrap{position:relative}
+.profile-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  padding:6px 12px;
+  border-radius:30px;
+  border:2px solid rgba(83,123,47,0.3);
+  background:transparent;
+  font-family:var(--sans);
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--g2);
+  box-shadow:#537B2F 3px 3px 0 0;
+  transition:all .15s;
+}
+.profile-btn:hover{background:#E4EB9C}
+.profile-btn:active{box-shadow:#537B2F 1px 1px 0 0;transform:translate(2px,2px)}
+.profile-btn img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.profile-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:.75rem;font-weight:700;
+}
+.profile-dropdown{
+  position:absolute;top:calc(100% + 10px);right:0;
+  background:#fff;border:2px solid rgba(83,123,47,0.2);
+  border-radius:20px;box-shadow:0 8px 32px rgba(20,44,20,0.15);
+  min-width:180px;overflow:hidden;display:none;z-index:600;
+}
+.profile-dropdown.show{display:block}
+.profile-dropdown a{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;color:var(--g1);
+  text-decoration:none;font-size:.85rem;font-weight:500;
+  transition:background .15s;
+}
+.profile-dropdown a:hover{background:var(--cream2)}
+.profile-dropdown .logout-link{
+  color:#dc3545;
+  border-top:1px solid rgba(83,123,47,.1);
+}
+
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  border:none;
+  background:transparent;
+  z-index:600;
+}
+.hamburger span{
+  display:block;
+  width:24px;
+  height:2px;
+  background:var(--g1);
+  border-radius:2px;
+  transition:all 0.3s;
+}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* MOBILE MENU (tanpa emoji, semua item konsisten) */
+.mobile-menu{
+  position:fixed;
+  top:0;
+  right:-280px;
+  width:280px;
+  height:100%;
+  background:#fff;
+  z-index:1000;
+  padding:70px 20px 20px;
+  transition:right 0.3s ease;
+  box-shadow:-5px 0 20px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  gap:0.5rem;
+}
+.mobile-menu.show{right:0}
+.mobile-menu a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  color:var(--g1);
+  font-weight:600;
+  border-radius:16px;
+  transition:background 0.2s;
+  text-decoration:none;
+  font-size:1rem;
+}
+.mobile-menu a:hover{background:var(--cream)}
+.mobile-menu a.active{
+  background:var(--g5);
+  color:var(--g2);
+}
+.mobile-menu hr{
+  margin:12px 0;
+  border:none;
+  border-top:1px solid #e0e8e2;
+}
+.menu-overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  z-index:999;
+  display:none;
+}
+.menu-overlay.show{display:block}
+
+/* ===== BUTTON 3D (untuk aksi kamera) ===== */
+.btn-3d{
+  background:linear-gradient(135deg,#537B2F,#2D5128);
+  border:2px solid #142C14;
+  border-radius:30px;
+  box-shadow:#142C14 4px 4px 0 0;
+  color:#fff;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  font-size:0.9rem;
+  padding:10px 22px;
+  text-decoration:none;
+  transition:all .15s;
+  font-family:var(--sans);
+  border:none;
+}
+.btn-3d:hover{background:linear-gradient(135deg,#8DA750,#537B2F);box-shadow:#142C14 4px 4px 0 0}
+.btn-3d:active{box-shadow:#142C14 2px 2px 0 0;transform:translate(2px,2px)}
+.btn-3d-outline{
+  background:#FFFAF0;
+  border:2px solid #537B2F;
+  border-radius:30px;
+  box-shadow:#537B2F 4px 4px 0 0;
+  color:#537B2F;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  font-size:0.9rem;
+  padding:10px 22px;
+  text-decoration:none;
+  transition:all .15s;
+  font-family:var(--sans);
+}
+.btn-3d-outline:hover{background:#E4EB9C}
+.btn-3d-outline:active{box-shadow:#537B2F 2px 2px 0 0;transform:translate(2px,2px)}
+.btn-3d-danger{
+  background:linear-gradient(135deg,#e53e3e,#c82333);
+  border:2px solid #8b0000;
+  border-radius:30px;
+  box-shadow:#8b0000 4px 4px 0 0;
+  color:#fff;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight:600;
+  font-size:0.9rem;
+  padding:10px 22px;
+  text-decoration:none;
+  transition:all .15s;
+  font-family:var(--sans);
+  border:none;
+}
+.btn-3d-danger:active{box-shadow:#8b0000 2px 2px 0 0;transform:translate(2px,2px)}
+
+/* MAIN CONTENT */
+.main-content{padding:86px 4% 4rem;max-width:720px;margin:0 auto}
+.page-header{margin-bottom:2rem;position:relative}
+.page-header h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.4rem);font-weight:900;letter-spacing:-.03em;color:var(--g1);margin-bottom:.5rem}
+.page-header p{font-size:.9rem;color:#5a7a5c;line-height:1.6}
+.header-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--g4),var(--g3));color:#fff;padding:4px 14px;border-radius:20px;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;box-shadow:0 2px 8px rgba(83,123,47,0.3)}
+.header-badge::before{content:'';width:6px;height:6px;background:#E4EB9C;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* CAMERA CARD */
+.camera-card{background:#fff;border-radius:28px;overflow:hidden;box-shadow:0 8px 32px rgba(20,44,20,0.12);border:2px solid rgba(83,123,47,0.12);margin-bottom:20px}
+.camera-preview{position:relative;aspect-ratio:4/3;background:var(--g1);overflow:hidden}
+#video,#imagePreview{width:100%;height:100%;object-fit:cover;display:none}
+.placeholder-camera{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#142C14 0%,#2D5128 50%,#537B2F 100%);color:white;text-align:center;gap:.75rem;position:relative}
+.placeholder-camera::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23537B2F' fill-opacity='0.15'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.placeholder-icon{width:72px;height:72px;background:rgba(255,255,255,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;border:2px solid rgba(255,255,255,0.2)}
+.placeholder-text{position:relative;z-index:1}
+.placeholder-text span{font-family:var(--serif);font-size:1.2rem;font-weight:700;color:#fff}
+.placeholder-text p{font-size:.85rem;opacity:.7;margin-top:.3rem}
+
+/* LOCATION CARD */
+.location-card{background:linear-gradient(135deg,#f0faf0,#e8f5e0);border:2px solid rgba(83,123,47,0.2);border-radius:20px;padding:16px 20px;margin-bottom:16px;box-shadow:0 4px 16px rgba(83,123,47,0.08)}
+.location-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.location-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--g3),var(--g2));border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(83,123,47,0.3)}
+.location-icon svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2}
+.location-title{font-weight:700;color:var(--g1);font-size:0.9rem}
+.location-subtitle{font-size:0.75rem;color:#5a7a5c}
+.location-status{font-size:0.8rem;color:#5a7a5c;display:flex;align-items:center;gap:6px}
+.location-status.found{color:#2D5128;font-weight:600}
+.location-status.found::before{content:'✓';background:#8DA750;color:#fff;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+#map-preview{height:200px;border-radius:14px;overflow:hidden;margin-top:12px;border:2px solid rgba(83,123,47,0.2);display:none}
+.location-detail{background:rgba(255,255,255,0.7);border-radius:12px;padding:10px 14px;margin-top:10px;font-size:0.8rem;color:var(--g2);display:none}
+.location-detail strong{color:var(--g1)}
+
+/* BUTTONS */
+.btn-group{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:20px;border-top:1px solid rgba(83,123,47,0.1)}
+#actionButtons{display:none;justify-content:center;gap:12px;flex-wrap:wrap;padding:0 20px 20px}
+
+/* RESULT & LOADING */
+.result-area{margin-top:20px;padding:20px;background:#fff;border-radius:20px;border:2px solid rgba(83,123,47,0.12);display:none;box-shadow:0 4px 16px rgba(20,44,20,0.08)}
+.loading{text-align:center;padding:40px}
+.loader{width:48px;height:48px;border:3px solid rgba(83,123,47,.15);border-top-color:var(--g3);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:#5a7a5c;font-size:.88rem;line-height:1.7}
+
+/* INFO BOX */
+.info-box{background:linear-gradient(135deg,rgba(83,123,47,.06),rgba(141,167,80,.06));border:1.5px solid rgba(83,123,47,.18);padding:14px 18px;border-radius:16px;margin-top:20px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 2px 8px rgba(83,123,47,0.06)}
+.info-box p{font-size:.82rem;color:#4a6b4c;line-height:1.65}
+
+.flash{padding:14px 18px;border-radius:14px;font-size:.88rem;display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;line-height:1.6}
+.flash.danger{background:#fdf0f0;color:#8b1a1a;border:1.5px solid #f0c0c0}
+.flash.success{background:#f0faf0;color:#1a5c1e;border:1.5px solid #b8ddb8}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hamburger{display:flex}
+  .nav-links{display:none}
+  .main-content{padding-top:80px}
+}
+</style>
+</head>
+<body>
+
+<!-- MOBILE SIDEBAR (tanpa emoji, tanpa warna khusus logout) -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('beranda') }}">Beranda</a>
+  <a href="{{ url_for('kamera') }}" class="active">Identifikasi</a>
+  <a href="{{ url_for('riwayat') }}">Riwayat</a>
+  <a href="{{ url_for('forum') }}">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_logout') }}">Keluar</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- NAVBAR dengan Profile Dropdown -->
+<nav id="navbar">
+  <a href="{{ url_for('beranda') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('beranda') }}">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}" class="active">Identifikasi</a></li>
+    <li><a href="{{ url_for('riwayat') }}">Riwayat</a></li>
+    <li><a href="{{ url_for('forum') }}">Forum</a></li>
+    <li>
+      <div class="profile-wrap">
+        <button class="profile-btn" onclick="toggleProfile(event)">
+          {% if session.get('user_foto') %}
+          <img src="{{ session.get('user_foto') }}" alt="foto">
+          {% else %}
+          <div class="profile-avatar">{{ session.get('user_nama', 'U')[0]|upper }}</div>
+          {% endif %}
+          {{ session.get('user_nama', '').split(' ')[0] }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <a href="{{ url_for('user_logout') }}" class="logout-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Keluar
+          </a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="main-content">
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+    <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}{% endif %}
+    {% endwith %}
+  </div>
+
+  <div class="page-header">
+    <div class="header-badge">AI Detection</div>
+    <h1>Identifikasi Gulma</h1>
+    <p>Foto gulma di lapangan, AI langsung mengenali jenis, karakteristik, dan cara pengendaliannya.</p>
+  </div>
+
+  <!-- LOCATION CARD -->
+  <div class="location-card">
+    <div class="location-header">
+      <div class="location-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <div>
+        <div class="location-title">Lokasi Penemuan</div>
+        <div class="location-subtitle">GPS otomatis, ini untuk pemetaan sebaran gulma</div>
+      </div>
+    </div>
+    <div class="location-status" id="locStatus">Klik tombol untuk deteksi lokasi...</div>
+    <div id="map-preview"></div>
+    <div class="location-detail" id="locationDetail">
+      <strong id="locAlamat">—</strong><br>
+      <span id="locKota">—</span>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-3d-outline" onclick="getLocation()" id="btnGetLoc" style="font-size:0.8rem;padding:8px 16px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>
+        Deteksi Lokasi GPS
+      </button>
+      <button class="btn-3d-outline" onclick="clearLocation()" style="font-size:0.8rem;padding:8px 16px;display:none" id="btnClearLoc">
+        ✕ Hapus Lokasi
+      </button>
+    </div>
+  </div>
+
+  <!-- CAMERA CARD -->
+  <div class="camera-card">
+    <div class="camera-preview">
+      <div id="placeholderPreview" class="placeholder-camera">
+        <div class="placeholder-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <div class="placeholder-text">
+          <span>Siap Mengidentifikasi</span>
+          <p>Pilih kamera atau galeri di bawah</p>
+        </div>
+      </div>
+      <video id="video" autoplay playsinline></video>
+      <img id="imagePreview" src="" alt="Preview">
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-3d" onclick="startCamera()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Buka Kamera
+      </button>
+      <button class="btn-3d-outline" onclick="openGallery()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="2.5"/><path d="M21 15l-5-4-3 3-4-4-5 5"/></svg>
+        Pilih dari Galeri
+      </button>
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+    </div>
+
+    <div id="actionButtons">
+      <button class="btn-3d-danger" id="btnCapture" onclick="capturePhoto()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Ambil Foto
+      </button>
+      <button class="btn-3d-outline" id="btnReset" onclick="resetCamera()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+        Ulang
+      </button>
+      <button class="btn-3d" id="btnUpload" onclick="uploadImage()" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 21H3M12 3v12m0-12l-4 4m4-4l4 4"/></svg>
+        Deteksi Sekarang
+      </button>
+    </div>
+  </div>
+
+  <div id="loadingArea" class="result-area">
+    <div class="loading">
+      <div class="loader"></div>
+      <p><strong>AI sedang menganalisis gambar...</strong></p>
+      <p>Proses ini membutuhkan beberapa detik</p>
+    </div>
+  </div>
+  <div id="resultArea" class="result-area"></div>
+
+  <div class="info-box">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--g3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <p>Pastikan foto jelas dan gulma terlihat penuh. Aktifkan GPS untuk mencatat lokasi penemuan, berguna untuk pemetaan sebaran gulma di wilayah Anda.</p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ===== LOKASI =====
+let lokasiData = { lat: null, lng: null, alamat: null, kota: null, provinsi: null };
+let leafletMap = null;
+let leafletMarker = null;
+
+function getLocation() {
+  const btn = document.getElementById('btnGetLoc');
+  const status = document.getElementById('locStatus');
+  btn.disabled = true;
+  status.innerHTML = '⏳ Mendapatkan lokasi GPS...';
+  status.className = 'location-status';
+
+  if (!navigator.geolocation) {
+    status.innerHTML = '❌ Browser tidak mendukung GPS';
+    btn.disabled = false;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      lokasiData.lat = lat;
+      lokasiData.lng = lng;
+
+      status.innerHTML = `✅ Koordinat: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      status.className = 'location-status found';
+
+      initMap(lat, lng);
+
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=id`);
+        const data = await res.json();
+        if (data && data.address) {
+          const a = data.address;
+          const kota = a.city || a.town || a.regency || a.county || a.municipality || '';
+          const provinsi = a.state || a.province || '';
+          const alamatLengkap = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+          lokasiData.alamat = alamatLengkap;
+          lokasiData.kota = kota;
+          lokasiData.provinsi = provinsi;
+
+          document.getElementById('locAlamat').textContent = alamatLengkap.substring(0, 100) + (alamatLengkap.length > 100 ? '...' : '');
+          document.getElementById('locKota').textContent = `${kota}${provinsi ? ', ' + provinsi : ''}`;
+          document.getElementById('locationDetail').style.display = 'block';
+
+          if (leafletMarker) {
+            leafletMarker.bindPopup(`<b>📍 Lokasi Ditemukan</b><br>${kota}${provinsi ? ', ' + provinsi : ''}`).openPopup();
+          }
+        }
+      } catch(e) {
+        lokasiData.alamat = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        document.getElementById('locAlamat').textContent = lokasiData.alamat;
+        document.getElementById('locationDetail').style.display = 'block';
+      }
+
+      btn.disabled = false;
+      document.getElementById('btnClearLoc').style.display = 'inline-flex';
+    },
+    (err) => {
+      let msg = '❌ Gagal mendapatkan lokasi';
+      if (err.code === 1) msg = '❌ Izin lokasi ditolak. Aktifkan di pengaturan browser.';
+      if (err.code === 2) msg = '❌ Sinyal GPS lemah, coba di luar ruangan.';
+      if (err.code === 3) msg = '❌ Timeout. Coba lagi.';
+      status.innerHTML = msg;
+      btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function initMap(lat, lng) {
+  const mapDiv = document.getElementById('map-preview');
+  mapDiv.style.display = 'block';
+
+  if (!leafletMap) {
+    leafletMap = L.map('map-preview').setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(leafletMap);
+  } else {
+    leafletMap.setView([lat, lng], 15);
+    if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+  }
+
+  const icon = L.divIcon({
+    html: `<div style="background:linear-gradient(135deg,#537B2F,#2D5128);width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,0.3)"><div style="transform:rotate(45deg);color:#fff;text-align:center;line-height:30px;font-size:14px">🌿</div></div>`,
+    className: '',
+    iconSize: [36, 36],
+    iconAnchor: [18, 36]
+  });
+
+  leafletMarker = L.marker([lat, lng], { icon }).addTo(leafletMap);
+  setTimeout(() => leafletMap.invalidateSize(), 100);
+}
+
+function clearLocation() {
+  lokasiData = { lat: null, lng: null, alamat: null, kota: null, provinsi: null };
+  document.getElementById('locStatus').innerHTML = 'Klik tombol untuk deteksi lokasi...';
+  document.getElementById('locStatus').className = 'location-status';
+  document.getElementById('locationDetail').style.display = 'none';
+  document.getElementById('map-preview').style.display = 'none';
+  document.getElementById('btnClearLoc').style.display = 'none';
+  if (leafletMap) { leafletMap.remove(); leafletMap = null; leafletMarker = null; }
+}
+
+// ===== KAMERA =====
+let stream = null;
+let capturedImage = null;
+let currentImageFile = null;
+
+async function startCamera() {
+  document.getElementById('placeholderPreview').style.display = 'none';
+  document.getElementById('video').style.display = 'block';
+  document.getElementById('imagePreview').style.display = 'none';
+  document.getElementById('actionButtons').style.display = 'flex';
+  document.getElementById('btnCapture').style.display = 'inline-flex';
+  document.getElementById('btnReset').style.display = 'inline-flex';
+  document.getElementById('btnUpload').style.display = 'none';
+  document.getElementById('resultArea').style.display = 'none';
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    document.getElementById('video').srcObject = stream;
+  } catch(e) {
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); document.getElementById('video').srcObject = stream; }
+    catch(e2) { showError('Tidak dapat mengakses kamera. Pastikan izin diberikan.'); resetCamera(); }
+  }
+}
+
+function openGallery() { document.getElementById('fileInput').click(); }
+
+function handleFileSelect(input) {
+  if (input.files && input.files[0]) {
+    currentImageFile = input.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+      capturedImage = e.target.result;
+      document.getElementById('placeholderPreview').style.display = 'none';
+      document.getElementById('video').style.display = 'none';
+      document.getElementById('imagePreview').src = capturedImage;
+      document.getElementById('imagePreview').style.display = 'block';
+      document.getElementById('actionButtons').style.display = 'flex';
+      document.getElementById('btnCapture').style.display = 'none';
+      document.getElementById('btnReset').style.display = 'inline-flex';
+      document.getElementById('btnUpload').style.display = 'inline-flex';
+      document.getElementById('resultArea').style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById('video');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  capturedImage = canvas.toDataURL('image/jpeg', 0.9);
+  fetch(capturedImage).then(r=>r.blob()).then(b=>{ currentImageFile = new File([b], "capture.jpg", {type:"image/jpeg"}); });
+  document.getElementById('video').style.display = 'none';
+  document.getElementById('imagePreview').src = capturedImage;
+  document.getElementById('imagePreview').style.display = 'block';
+  document.getElementById('btnCapture').style.display = 'none';
+  document.getElementById('btnUpload').style.display = 'inline-flex';
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream = null; }
+}
+
+function resetCamera() {
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  document.getElementById('placeholderPreview').style.display = 'flex';
+  document.getElementById('video').style.display = 'none';
+  document.getElementById('imagePreview').style.display = 'none';
+  document.getElementById('actionButtons').style.display = 'none';
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('loadingArea').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  capturedImage = null; currentImageFile = null;
+}
+
+async function uploadImage() {
+  if (!currentImageFile) { alert('Ambil foto atau pilih gambar terlebih dahulu!'); return; }
+  document.getElementById('loadingArea').style.display = 'block';
+  document.getElementById('resultArea').style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('file', currentImageFile);
+  if (lokasiData.lat) formData.append('lokasi_lat', lokasiData.lat);
+  if (lokasiData.lng) formData.append('lokasi_lng', lokasiData.lng);
+  if (lokasiData.alamat) formData.append('lokasi_alamat', lokasiData.alamat);
+  if (lokasiData.kota) formData.append('lokasi_kota', lokasiData.kota);
+  if (lokasiData.provinsi) formData.append('lokasi_provinsi', lokasiData.provinsi);
+
+  try {
+    const response = await fetch('/deteksi', { method: 'POST', body: formData });
+    const data = await response.json();
+    document.getElementById('loadingArea').style.display = 'none';
+    if (data.detected) {
+      window.location.href = `/detail-sesi/${data.sesi_foto}`;
+    } else {
+      document.getElementById('resultArea').style.display = 'block';
+      document.getElementById('resultArea').innerHTML = `
+        <div class="flash danger"><strong>Gulma tidak terdeteksi</strong> — ${data.message || ''}</div>
+        <div style="text-align:center;margin-top:14px">
+          <button class="btn-3d" onclick="resetCamera()">Coba Lagi</button>
+        </div>`;
+    }
+  } catch(e) {
+    document.getElementById('loadingArea').style.display = 'none';
+    showError('Terjadi kesalahan jaringan. Coba lagi.');
+  }
+}
+
+function showError(msg) {
+  document.getElementById('resultArea').style.display = 'block';
+  document.getElementById('resultArea').innerHTML = `<div class="flash danger">${msg}</div>`;
+}
+
+// ===== NAVBAR =====
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+const menuOverlay = document.getElementById('menuOverlay');
+
+function openMenu() {
+  hamburger.classList.add('open');
+  mobileMenu.classList.add('show');
+  menuOverlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeMenu() {
+  hamburger.classList.remove('open');
+  mobileMenu.classList.remove('show');
+  menuOverlay.classList.remove('show');
+  document.body.style.overflow = '';
+}
+hamburger.addEventListener('click', openMenu);
+menuOverlay.addEventListener('click', closeMenu);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+// Profile dropdown
+function toggleProfile(e) {
+  e.stopPropagation();
+  document.getElementById('profileDropdown').classList.toggle('show');
+}
+document.addEventListener('click', () => {
+  document.getElementById('profileDropdown').classList.remove('show');
+});
+
+// Navbar scroll effect
+const navEl = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navEl.classList.toggle('scrolled', window.scrollY > 40);
+});
+</script>
+</body>
+</html>

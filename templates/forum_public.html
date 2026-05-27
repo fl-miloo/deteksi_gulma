@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Forum Diskusi - Gulmaify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --g1: #142C14;
+  --g2: #2D5128;
+  --g3: #537B2F;
+  --g4: #8DA750;
+  --g5: #E4EB9C;
+  --cream: #FFFAF0;
+  --cream2: #F2F4F5;
+  --gold: #FFB800;
+  --rust: #FF6D2D;
+  --dark: #0b1f0c;
+  --serif: 'DM Serif Display', 'Fraunces', Georgia, serif;
+  --sans: 'Instrument Sans', 'Quicksand', system-ui, sans-serif;
+  --shadow-green: 0 8px 20px rgba(20,44,20,0.12);
+  --shadow-3d: 0 4px 0 0 #142C14;
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--cream);
+  color: var(--g1);
+  overflow-x: hidden;
+}
+
+/* custom cursor hanya desktop */
+@media (pointer: fine) {
+  #cursor {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    background: var(--g3);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s, width 0.2s, height 0.2s, background 0.2s;
+    mix-blend-mode: multiply;
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--g2);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.35s cubic-bezier(.25,.46,.45,.94), width 0.3s, height 0.3s, border-color 0.3s;
+  }
+}
+@media (pointer: coarse) { 
+  #cursor, #cursor-ring { display: none; } 
+}
+
+/* ===== NAVBAR (sama dengan landing) ===== */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4%;
+  background: rgba(255,250,240,0.95);
+  backdrop-filter: blur(16px);
+  border-bottom: 2px solid rgba(83,123,47,0.2);
+  box-shadow: 0 2px 12px rgba(20,44,20,0.08);
+  transition: all 0.2s;
+}
+nav.scrolled {
+  background: rgba(255,250,240,0.98);
+  border-bottom-color: rgba(83,123,47,0.25);
+}
+.nav-logo {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--g1);
+  text-decoration: none;
+  letter-spacing: -0.03em;
+}
+.nav-logo em {
+  font-style: italic;
+  color: var(--g3);
+}
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  align-items: center;
+}
+.nav-links a {
+  font-size: 0.85rem;
+  color: var(--g2);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover {
+  color: var(--g3);
+}
+.btn-nav {
+  background: linear-gradient(135deg,#537B2F,#2D5128) !important;
+  border: 2px solid #142C14;
+  border-radius: 30px;
+  box-shadow: #142C14 3px 3px 0 0;
+  color: #fff !important;
+  padding: 7px 18px !important;
+  font-weight: 600;
+  font-size: 0.82rem;
+  transition: all 0.15s;
+}
+.btn-nav:hover {
+  background: linear-gradient(135deg,#8DA750,#537B2F) !important;
+  box-shadow: #142C14 3px 3px 0 0;
+  transform: translateY(-1px);
+}
+.btn-nav:active {
+  box-shadow: #142C14 1px 1px 0 0;
+  transform: translate(2px,2px);
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  z-index: 600;
+}
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--g1);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100%;
+  background: #fff;
+  z-index: 1000;
+  padding: 70px 20px 20px;
+  transition: right 0.3s ease;
+  box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.mobile-menu.show {
+  right: 0;
+}
+.mobile-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--g1);
+  font-weight: 500;
+  border-radius: 12px;
+  transition: background 0.2s;
+  text-decoration: none;
+}
+.mobile-menu a:hover {
+  background: var(--cream);
+}
+.mobile-menu hr {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid #e0e8e2;
+}
+.mobile-menu .btn-mobile-cta {
+  background: linear-gradient(135deg,#537B2F,#2D5128);
+  border: 2px solid #142C14;
+  border-radius: 30px;
+  box-shadow: #142C14 3px 3px 0 0;
+  color: #fff;
+  justify-content: center;
+  margin-top: 1rem;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  display: none;
+}
+.menu-overlay.show {
+  display: block;
+}
+
+/* ===== BUTTON 3D ===== */
+.btn-primary, .btn-cta-white, .btn-google {
+  background: linear-gradient(135deg,#537B2F,#2D5128);
+  border: 2px solid #142C14;
+  border-radius: 30px;
+  box-shadow: #142C14 4px 4px 0 0;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 10px 22px;
+  text-decoration: none;
+  transition: all 0.15s;
+  font-family: var(--sans);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg,#8DA750,#537B2F);
+  box-shadow: #142C14 4px 4px 0 0;
+  transform: translateY(-2px);
+}
+.btn-primary:active {
+  box-shadow: #142C14 2px 2px 0 0;
+  transform: translate(2px,2px);
+}
+.btn-ghost {
+  color: var(--g2);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: gap 0.2s,color 0.2s;
+  background: transparent;
+  border: none;
+}
+.btn-ghost:hover {
+  color: var(--g3);
+  gap: 0.8rem;
+}
+
+/* container forum */
+.forum-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 100px 4% 60px;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.page-header h1 {
+  font-family: var(--serif);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--g1);
+}
+.sort-form select {
+  padding: 8px 16px;
+  border-radius: 40px;
+  border: 2px solid var(--g3);
+  background: #fff;
+  font-family: var(--sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sort-form select:hover {
+  border-color: var(--g2);
+}
+
+.forum-grid {
+  display: grid;
+  gap: 28px;
+}
+
+/* Card Forum dengan gaya landing */
+.forum-card {
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(20,44,20,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid rgba(83,123,47,0.15);
+}
+.forum-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px rgba(20,44,20,0.12);
+}
+.card-inner {
+  display: flex;
+  flex-wrap: wrap;
+}
+.card-image {
+  width: 200px;
+  background: #eef3ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.card-image img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+.card-content {
+  flex: 1;
+  padding: 22px;
+}
+.card-title {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--g1);
+  margin-bottom: 10px;
+}
+.card-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: #7a9c7e;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.label-gulma {
+  background: #e8f2e5;
+  color: var(--g3);
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.confidence {
+  font-size: 0.7rem;
+  color: var(--g2);
+  font-weight: 500;
+}
+.desc-preview {
+  font-size: 0.85rem;
+  color: #5a7a5c;
+  line-height: 1.6;
+  margin: 12px 0;
+}
+.btn-read-more {
+  background: none;
+  border: none;
+  color: var(--g3);
+  font-weight: 600;
+  font-size: 0.75rem;
+  margin-left: 4px;
+  cursor: pointer;
+  font-family: var(--sans);
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.btn-read-more:hover {
+  color: var(--g2);
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--g3);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.comment-count {
+  font-size: 0.75rem;
+  color: var(--g3);
+  font-weight: 600;
+  background: #eef3ea;
+  padding: 4px 12px;
+  border-radius: 40px;
+}
+
+/* Login prompt yang menarik (sama gaya dengan landing) */
+.login-prompt {
+  background: var(--g1);
+  border-radius: 28px;
+  padding: 40px 30px;
+  text-align: center;
+  margin-top: 60px;
+  border: 2px solid rgba(141,167,80,0.3);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+.login-prompt p {
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 24px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.login-prompt a {
+  background: #fff;
+  color: var(--g2);
+  padding: 12px 28px;
+  border-radius: 40px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: #142C14 3px 3px 0 0;
+  border: 2px solid #142C14;
+}
+.login-prompt a:hover {
+  background: var(--g5);
+  transform: translateY(-2px);
+  box-shadow: #142C14 4px 4px 0 0;
+}
+.login-prompt a:active {
+  transform: translate(2px,2px);
+  box-shadow: #142C14 2px 2px 0 0;
+}
+
+/* Overlay untuk modal login (jika diperlukan) */
+.modal-login {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-login.show {
+  display: flex;
+}
+.modal-content {
+  background: var(--cream);
+  max-width: 400px;
+  width: 90%;
+  border-radius: 32px;
+  padding: 32px;
+  text-align: center;
+  border: 2px solid var(--g4);
+}
+.modal-content h3 {
+  font-family: var(--serif);
+  margin-bottom: 16px;
+}
+.modal-content .btn-google {
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+}
+.close-modal {
+  margin-top: 20px;
+  background: transparent;
+  border: none;
+  color: var(--g2);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+  }
+  .nav-links {
+    display: none;
+  }
+  .card-image {
+    width: 100%;
+  }
+  .card-image img {
+    height: auto;
+    max-height: 160px;
+  }
+  .card-title {
+    font-size: 1.1rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+  }
+  .forum-container {
+    padding-top: 80px;
+  }
+  .login-prompt {
+    padding: 30px 20px;
+  }
+}
+
+/* Efek blur untuk konten panjang jika belum login (opsional, tapi kita gunakan prompt saja) */
+.overlay-blur {
+  position: relative;
+}
+.overlay-blur::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to top, rgba(255,250,240,0.95), transparent);
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('landing') }}">Beranda</a>
+  <a href="{{ url_for('kamera') }}">Identifikasi</a>
+  <a href="{{ url_for('forum') }}">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_login') }}" class="btn-mobile-cta">Masuk</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<nav id="navbar">
+  <a href="{{ url_for('landing') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('landing') }}">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}">Identifikasi</a></li>
+    <li><a href="{{ url_for('forum') }}">Forum</a></li>
+    <li><a href="{{ url_for('user_login') }}" class="btn-nav">Masuk</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="forum-container">
+  <div class="page-header">
+    <h1>Diskusi Komunitas</h1>
+    <form method="GET" class="sort-form">
+      <select name="sort" onchange="this.form.submit()">
+        <option value="terbaru" {% if sort=='terbaru' %}selected{% endif %}>Terbaru</option>
+        <option value="teramai" {% if sort=='teramai' %}selected{% endif %}>Teramai</option>
+      </select>
+    </form>
+  </div>
+
+  <div class="forum-grid">
+    {% for post in posts %}
+    <div class="forum-card" data-post-id="{{ post.id_forum }}">
+      <div class="card-inner">
+        <div class="card-image">
+          {% if post.foto_post %}
+            <img src="{{ url_for('static', filename='uploads/' + post.foto_post) }}" alt="Foto postingan">
+          {% elif post.foto_annotasi %}
+            <img src="{{ url_for('static', filename='uploads/' + post.foto_annotasi) }}" alt="Preview deteksi">
+          {% elif post.foto_upload %}
+            <img src="{{ url_for('static', filename='uploads/' + post.foto_upload) }}" alt="Preview deteksi">
+          {% else %}
+            <img src="{{ url_for('static', filename='uploads/default_weed.jpg') }}" alt="Gulmaify">
+          {% endif %}
+        </div>
+        <div class="card-content">
+          <div class="card-title">{{ post.judul }}</div>
+          <div class="card-meta">
+            {% if post.label_ai %}
+            <span class="label-gulma">{{ post.label_ai|replace('_',' ') }}</span>
+            <span class="confidence">Confidence: {{ (post.confidence_score * 100)|round(1) }}%</span>
+            {% else %}
+            <span class="label-gulma">Diskusi Umum</span>
+            {% endif %}
+          </div>
+          <!-- Deskripsi hanya preview (140 karakter) -->
+          <div class="desc-preview">
+            {{ post.deskripsi|striptags|truncate(140) }}
+            {% if post.deskripsi|length > 140 %}
+              <button class="btn-read-more" data-id="{{ post.id_forum }}" data-full="{{ post.deskripsi|striptags|replace('"', '&quot;') }}">Baca selengkapnya →</button>
+            {% endif %}
+          </div>
+          <div class="card-footer">
+            <div class="user">
+              {% if post.user_foto %}
+              <img src="{{ post.user_foto }}" class="user-avatar" style="border-radius:50%;object-fit:cover">
+              {% else %}
+              <div class="user-avatar">{{ post.user_nama[0]|upper }}</div>
+              {% endif %}
+              <span>{{ post.user_nama }}</span>
+            </div>
+            <div class="comment-count">💬 {{ post.jumlah_komentar }} komentar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <p>Belum ada diskusi. Yuk mulai berbagi hasil identifikasi gulma!</p>
+    {% endfor %}
+  </div>
+
+  <!-- Prompt login untuk aksi (baca lengkap, komentar, post baru) -->
+  <div class="login-prompt">
+    <p>🌱 Ingin membaca diskusi lengkap, berkomentar, atau berbagi hasil identifikasi gulma Anda?</p>
+    <a href="{{ url_for('user_login') }}">Login dengan Google →</a>
+  </div>
+</div>
+
+</div>
+
+<script>
+// Navbar scroll
+const navEl = document.getElementById('navbar');
+window.addEventListener('scroll', () => navEl.classList.toggle('scrolled', window.scrollY > 40));
+
+// Mobile menu
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+const overlay = document.getElementById('menuOverlay');
+function openMenu() { hamburger.classList.add('open'); mobileMenu.classList.add('show'); overlay.classList.add('show'); document.body.style.overflow = 'hidden'; }
+function closeMenu() { hamburger.classList.remove('open'); mobileMenu.classList.remove('show'); overlay.classList.remove('show'); document.body.style.overflow = ''; }
+hamburger.addEventListener('click', openMenu);
+overlay.addEventListener('click', closeMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+// Cursor effect
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+if (cur && ring) {
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cur.style.left = mx + 'px'; cur.style.top = my + 'px'; });
+  (function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  })();
+  document.querySelectorAll('a, button, .forum-card, .btn-read-more').forEach(el => {
+    el.addEventListener('mouseenter', () => { cur.style.width = '20px'; cur.style.height = '20px'; ring.style.width = '54px'; ring.style.height = '54px'; });
+    el.addEventListener('mouseleave', () => { cur.style.width = '12px'; cur.style.height = '12px'; ring.style.width = '36px'; ring.style.height = '36px'; });
+  });
+}
+
+// ✅ Klik card → langsung ke halaman detail publik (bisa dibaca tanpa login)
+document.querySelectorAll('.forum-card').forEach(card => {
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => {
+    const postId = card.dataset.postId;
+    if (postId) window.location.href = `/diskusi/${postId}`;
+  });
+});
+
+// ✅ Tombol "Baca selengkapnya" juga langsung ke detail
+document.querySelectorAll('.btn-read-more').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const card = btn.closest('.forum-card');
+    const postId = card ? card.dataset.postId : null;
+    if (postId) window.location.href = `/diskusi/${postId}`;
+  });
+});
+
+// Juga jika user mengklik card di area selain tombol? kita ingin arahkan ke login juga?
+// Agar konsisten: ketika mengklik card (kecuali tombol) juga minta login
+document.querySelectorAll('.forum-card').forEach(card => {
+  card.addEventListener('click', (e) => {
+    // Jangan jika yang diklik adalah tombol .btn-read-more (sudah ditangani di atas)
+    if (e.target.classList && e.target.classList.contains('btn-read-more')) return;
+    e.preventDefault();
+    showLoginModal();
+  });
+});
+
+// Jika sudah login dari server, maka tombol-tombol ini akan menuju ke detail asli.
+// Karena kita tidak bisa mengubah href secara dinamis di frontend tanpa session info, 
+// kita biarkan login modal muncul. Setelah login sukses, pengguna akan diarahkan kembali ke halaman forum.
+// Untuk pengalaman lebih baik, setelah login redirect ke halaman yang sama (bisa diatur di backend).
+</script>
+
+</body>
+</html>

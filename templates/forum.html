@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Forum Diskusi - Gulmaify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --g1: #142C14;
+    --g2: #2D5128;
+    --g3: #537B2F;
+    --g4: #8DA750;
+    --g5: #E4EB9C;
+    --cream: #FFFAF0;
+    --cream2: #F2F4F5;
+    --gold: #FFB800;
+    --rust: #FF6D2D;
+    --dark: #0b1f0c;
+    --serif: 'DM Serif Display', 'Fraunces', Georgia, serif;
+    --sans: 'Instrument Sans', 'Quicksand', system-ui, sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--g1);
+    overflow-x: hidden;
+  }
+
+  /* custom cursor hanya desktop */
+  @media (pointer: fine) {
+    #cursor {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      background: var(--g3);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.15s, width 0.2s, height 0.2s, background 0.2s;
+      mix-blend-mode: multiply;
+    }
+    #cursor-ring {
+      position: fixed;
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--g2);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.35s cubic-bezier(.25,.46,.45,.94), width 0.3s, height 0.3s, border-color 0.3s;
+    }
+  }
+  @media (pointer: coarse) { 
+    #cursor, #cursor-ring { display: none; } 
+  }
+
+/* ===== NAVBAR (sama dengan beranda) ===== */
+nav{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:500;
+  height:66px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 4%;
+  background:rgba(255,250,240,0.95);
+  backdrop-filter:blur(16px);
+  border-bottom:2px solid rgba(83,123,47,0.2);
+  box-shadow:0 2px 12px rgba(20,44,20,0.08);
+  transition:all 0.2s;
+}
+nav.scrolled{
+  background:rgba(255,250,240,0.98);
+  border-bottom-color:rgba(83,123,47,0.25);
+}
+.nav-logo{
+  font-family:var(--serif);
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--g1);
+  text-decoration:none;
+  letter-spacing:-0.03em;
+}
+.nav-logo em{
+  font-style:italic;
+  color:var(--g3);
+}
+.nav-links{
+  display:flex;
+  gap:2rem;
+  list-style:none;
+  align-items:center;
+}
+.nav-links a{
+  font-size:0.85rem;
+  color:var(--g2);
+  text-decoration:none;
+  font-weight:500;
+  transition:color 0.2s;
+  padding:6px 0;
+  border-bottom:2px solid transparent;
+}
+.nav-links a:hover{
+  color:var(--g3);
+}
+.nav-links a.active{
+  color:var(--g3);
+  border-bottom-color:var(--g3);
+}
+
+/* Profile dropdown (sama seperti beranda) */
+.profile-wrap{position:relative}
+.profile-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  padding:6px 12px;
+  border-radius:30px;
+  border:2px solid rgba(83,123,47,0.3);
+  background:transparent;
+  font-family:var(--sans);
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--g2);
+  box-shadow:#537B2F 3px 3px 0 0;
+  transition:all .15s;
+}
+.profile-btn:hover{background:#E4EB9C}
+.profile-btn:active{box-shadow:#537B2F 1px 1px 0 0;transform:translate(2px,2px)}
+.profile-btn img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.profile-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:.75rem;font-weight:700;
+}
+.profile-dropdown{
+  position:absolute;top:calc(100% + 10px);right:0;
+  background:#fff;border:2px solid rgba(83,123,47,0.2);
+  border-radius:20px;box-shadow:0 8px 32px rgba(20,44,20,0.15);
+  min-width:180px;overflow:hidden;display:none;z-index:600;
+}
+.profile-dropdown.show{display:block}
+.profile-dropdown a{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;color:var(--g1);
+  text-decoration:none;font-size:.85rem;font-weight:500;
+  transition:background .15s;
+}
+.profile-dropdown a:hover{background:var(--cream2)}
+.profile-dropdown .logout-link{
+  color:#dc3545;
+  border-top:1px solid rgba(83,123,47,.1);
+}
+
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  border:none;
+  background:transparent;
+  z-index:600;
+}
+.hamburger span{
+  display:block;
+  width:24px;
+  height:2px;
+  background:var(--g1);
+  border-radius:2px;
+  transition:all 0.3s;
+}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -280px;
+    width: 280px;
+    height: 100%;
+    background: #fff;
+    z-index: 1000;
+    padding: 70px 20px 20px;
+    transition: right 0.3s ease;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .mobile-menu.show {
+    right: 0;
+  }
+  .mobile-menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    color: var(--g1);
+    font-weight: 500;
+    border-radius: 12px;
+    transition: background 0.2s;
+    text-decoration: none;
+  }
+  .mobile-menu a:hover {
+    background: var(--cream);
+  }
+  .mobile-menu hr {
+    margin: 12px 0;
+    border: none;
+    border-top: 1px solid #e0e8e2;
+  }
+  .menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+  }
+  .menu-overlay.show {
+    display: block;
+  }
+
+  /* ===== BUTTON 3D ===== */
+  .btn-create-post, .btn-filter, .btn-reset {
+    background: linear-gradient(135deg,#537B2F,#2D5128);
+    border: 2px solid #142C14;
+    border-radius: 30px;
+    box-shadow: #142C14 3px 3px 0 0;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 8px 20px;
+    text-decoration: none;
+    transition: all 0.15s;
+    font-family: var(--sans);
+  }
+  .btn-create-post:hover, .btn-filter:hover {
+    background: linear-gradient(135deg,#8DA750,#537B2F);
+    box-shadow: #142C14 3px 3px 0 0;
+    transform: translateY(-2px);
+  }
+  .btn-reset {
+    background: transparent;
+    color: var(--g2);
+    box-shadow: none;
+    border: 2px solid var(--g3);
+  }
+  .btn-reset:hover {
+    background: var(--g5);
+    transform: translateY(-2px);
+  }
+
+  /* Container forum */
+  .forum-container {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 100px 4% 60px;
+  }
+
+  /* Header dan filter */
+  .forum-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .forum-header h1 {
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--g1);
+  }
+  .filter-bar {
+    background: #fff;
+    border-radius: 24px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    border: 1px solid rgba(83,123,47,0.15);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    justify-content: space-between;
+  }
+  .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  .filter-group select {
+    padding: 8px 16px;
+    border-radius: 40px;
+    border: 2px solid var(--g3);
+    background: #fff;
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .filter-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .sort-form select {
+    padding: 8px 16px;
+    border-radius: 40px;
+    border: 2px solid var(--g3);
+    background: #fff;
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+
+  /* Forum cards */
+  .forum-grid {
+    display: grid;
+    gap: 28px;
+  }
+  .forum-card {
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(20,44,20,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid rgba(83,123,47,0.15);
+  }
+  .forum-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 30px rgba(20,44,20,0.12);
+  }
+  .card-inner {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .card-image {
+    width: 200px;
+    background: #eef3ea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .card-image img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 16px;
+  }
+  .card-content {
+    flex: 1;
+    padding: 22px;
+  }
+  .card-title {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--g1);
+    margin-bottom: 10px;
+  }
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.75rem;
+    color: #7a9c7e;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .label-gulma {
+    background: #e8f2e5;
+    color: var(--g3);
+    padding: 4px 12px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .confidence {
+    font-size: 0.7rem;
+    color: var(--g2);
+    font-weight: 500;
+  }
+  .post-date {
+    font-size: 0.7rem;
+    color: #5a7a5c;
+    background: rgba(141,167,80,0.1);
+    padding: 4px 10px;
+    border-radius: 30px;
+  }
+  .desc {
+    font-size: 0.85rem;
+    color: #5a7a5c;
+    line-height: 1.6;
+    margin: 12px 0;
+  }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--g3);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .comment-count {
+    font-size: 0.75rem;
+    color: var(--g3);
+    font-weight: 600;
+    background: #eef3ea;
+    padding: 4px 12px;
+    border-radius: 40px;
+  }
+  .delete-link {
+    color: #dc3545;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .delete-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+  }
+  .pagination a, .pagination .current-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 40px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    background: #fff;
+    color: var(--g2);
+    border: 2px solid rgba(83,123,47,0.2);
+  }
+  .pagination a:hover {
+    background: var(--cream);
+    border-color: var(--g3);
+    transform: translateY(-2px);
+  }
+  .pagination .current-page {
+    background: var(--g3);
+    color: white;
+    border-color: var(--g3);
+    pointer-events: none;
+  }
+  .pagination .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    background: #f0f0f0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hamburger {
+      display: flex;
+    }
+    .nav-links {
+      display: none;
+    }
+    .card-image {
+      width: 100%;
+    }
+    .card-image img {
+      height: auto;
+      max-height: 180px;
+    }
+    .forum-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .forum-header h1 {
+      text-align: center;
+    }
+    .btn-create-post {
+      justify-content: center;
+    }
+    .filter-bar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .filter-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .filter-group select {
+      width: 100%;
+    }
+    .filter-actions {
+      justify-content: center;
+    }
+    .sort-form {
+      width: 100%;
+    }
+    .sort-form select {
+      width: 100%;
+    }
+    .card-meta {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- MOBILE SIDEBAR (tanpa emoji, tanpa warna khusus logout) -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('beranda') }}">Beranda</a>
+  <a href="{{ url_for('kamera') }}" >Identifikasi</a>
+  <a href="{{ url_for('riwayat') }}">Riwayat</a>
+  <a href="{{ url_for('forum') }}" class="active">Forum</a>
+  <hr>
+  <a href="{{ url_for('user_logout') }}">Keluar</a>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- NAVBAR dengan Profile Dropdown -->
+<nav id="navbar">
+  <a href="{{ url_for('beranda') }}" class="nav-logo">Gulma<em>ify</em></a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('beranda') }}">Beranda</a></li>
+    <li><a href="{{ url_for('kamera') }}" >Identifikasi</a></li>
+    <li><a href="{{ url_for('riwayat') }}">Riwayat</a></li>
+    <li><a href="{{ url_for('forum') }}" class="active">Forum</a></li>
+    <li>
+      <div class="profile-wrap">
+        <button class="profile-btn" onclick="toggleProfile(event)">
+          {% if session.get('user_foto') %}
+          <img src="{{ session.get('user_foto') }}" alt="foto">
+          {% else %}
+          <div class="profile-avatar">{{ session.get('user_nama', 'U')[0]|upper }}</div>
+          {% endif %}
+          {{ session.get('user_nama', '').split(' ')[0] }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <a href="{{ url_for('user_logout') }}" class="logout-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Keluar
+          </a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="forum-container">
+  <div class="forum-header">
+    <h1>Diskusi Forum</h1>
+    <a href="{{ url_for('buat_postingan') }}" class="btn-create-post">+ Buat Postingan Baru</a>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <form method="GET" class="sort-form">
+        <select name="sort" onchange="this.form.submit()">
+          <option value="terbaru" {% if sort=='terbaru' %}selected{% endif %}>Terbaru</option>
+          <option value="teramai" {% if sort=='teramai' %}selected{% endif %}>Teramai</option>
+        </select>
+        <input type="hidden" name="bulan" value="{{ bulan_filter if bulan_filter else '' }}">
+        <input type="hidden" name="tahun" value="{{ tahun_filter if tahun_filter else '' }}">
+      </form>
+
+      <form method="GET" style="display: flex; flex-wrap: wrap; gap: 12px;">
+        <select name="bulan">
+          <option value="">Semua Bulan</option>
+          {% for b in range(1,13) %}
+            <option value="{{ b }}" {% if bulan_filter|int == b %}selected{% endif %}>
+              {{ b }} - {{ ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][b-1] }}
+            </option>
+          {% endfor %}
+        </select>
+        <select name="tahun">
+          <option value="">Semua Tahun</option>
+          {% for th in tahun_list %}
+            <option value="{{ th }}" {% if tahun_filter|int == th %}selected{% endif %}>{{ th }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="sort" value="{{ sort }}">
+        <div class="filter-actions">
+          <button type="submit" class="btn-filter">Filter</button>
+          <a href="{{ url_for('forum', sort=sort) }}" class="btn-reset">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="forum-grid">
+    {% for post in posts %}
+    <div class="forum-card">
+      <a href="{{ url_for('diskusi_detail', id_forum=post.id_forum) }}" style="text-decoration:none;color:inherit">
+        <div class="card-inner">
+          <div class="card-image">
+            {% if post.foto_post %}
+              <img src="{{ url_for('static', filename='uploads/' + post.foto_post) }}" alt="Foto postingan">
+            {% elif post.foto_annotasi %}
+              <img src="{{ url_for('static', filename='uploads/' + post.foto_annotasi) }}" alt="Preview deteksi">
+            {% elif post.foto_upload %}
+              <img src="{{ url_for('static', filename='uploads/' + post.foto_upload) }}" alt="Preview deteksi">
+            {% else %}
+              <img src="{{ url_for('static', filename='uploads/default_weed.jpg') }}" alt="Gulmaify">
+            {% endif %}
+          </div>
+          <div class="card-content">
+            <div class="card-title">{{ post.judul }}</div>
+            <div class="card-meta">
+              {% if post.label_ai %}
+                <span class="label-gulma">{{ post.label_ai|replace('_',' ') }}</span>
+                <span class="confidence">Confidence: {{ (post.confidence_score * 100)|round(1) }}%</span>
+              {% else %}
+                <span class="label-gulma">Diskusi Umum</span>
+              {% endif %}
+              <span class="post-date">{{ post.tgl_post.strftime('%d %b %Y') if post.tgl_post else '-' }}</span>
+            </div>
+            <div class="desc">{{ post.deskripsi|striptags|truncate(140) }}</div>
+            <div class="card-footer">
+              <div class="user">
+                {% if post.user_foto %}
+                  <img src="{{ post.user_foto }}" class="user-avatar" style="border-radius:50%;object-fit:cover">
+                {% else %}
+                  <div class="user-avatar">{{ post.user_nama[0]|upper }}</div>
+                {% endif %}
+                <span>{{ post.user_nama }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="comment-count">💬 {{ post.jumlah_komentar }} komentar</div>
+                {% if session.get('user_id') and post.user_id == session['user_id'] %}
+                  <a href="{{ url_for('hapus_postingan', id_forum=post.id_forum) }}" 
+                     onclick="return confirm('Yakin ingin menghapus postingan ini? Semua komentar juga akan hilang.')"
+                     class="delete-link">Hapus</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% else %}
+      <p style="text-align: center; padding: 40px;">Belum ada diskusi. Buat postingan baru atau bagikan hasil deteksi gulma Anda!</p>
+    {% endfor %}
+  </div>
+
+  {# Pagination #}
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="{{ url_for('forum', page=page-1, sort=sort, bulan=bulan_filter, tahun=tahun_filter) }}" class="prev-next">« Sebelumnya</a>
+    {% else %}
+      <span class="disabled prev-next">« Sebelumnya</span>
+    {% endif %}
+
+    {% set start = [1, page-2]|max %}
+    {% set end = [total_pages, page+2]|min %}
+    {% if start > 1 %}
+      <a href="{{ url_for('forum', page=1, sort=sort, bulan=bulan_filter, tahun=tahun_filter) }}">1</a>
+      {% if start > 2 %}<span class="dots">...</span>{% endif %}
+    {% endif %}
+
+    {% for p in range(start, end+1) %}
+      {% if p == page %}
+        <span class="current-page">{{ p }}</span>
+      {% else %}
+        <a href="{{ url_for('forum', page=p, sort=sort, bulan=bulan_filter, tahun=tahun_filter) }}">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if end < total_pages %}
+      {% if end < total_pages-1 %}<span class="dots">...</span>{% endif %}
+      <a href="{{ url_for('forum', page=total_pages, sort=sort, bulan=bulan_filter, tahun=tahun_filter) }}">{{ total_pages }}</a>
+    {% endif %}
+
+    {% if page < total_pages %}
+      <a href="{{ url_for('forum', page=page+1, sort=sort, bulan=bulan_filter, tahun=tahun_filter) }}" class="prev-next">Selanjutnya »</a>
+    {% else %}
+      <span class="disabled prev-next">Selanjutnya »</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  // ===== NAVBAR =====
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+const menuOverlay = document.getElementById('menuOverlay');
+
+function openMenu() {
+  hamburger.classList.add('open');
+  mobileMenu.classList.add('show');
+  menuOverlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeMenu() {
+  hamburger.classList.remove('open');
+  mobileMenu.classList.remove('show');
+  menuOverlay.classList.remove('show');
+  document.body.style.overflow = '';
+}
+hamburger.addEventListener('click', openMenu);
+menuOverlay.addEventListener('click', closeMenu);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+// Profile dropdown
+function toggleProfile(e) {
+  e.stopPropagation();
+  document.getElementById('profileDropdown').classList.toggle('show');
+}
+document.addEventListener('click', () => {
+  document.getElementById('profileDropdown').classList.remove('show');
+});
+
+// Navbar scroll effect
+const navEl = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navEl.classList.toggle('scrolled', window.scrollY > 40);
+});
+
+  // Profile dropdown
+  function toggleProfile(e) {
+    e.stopPropagation();
+    document.getElementById('profileDropdown').classList.toggle('show');
+  }
+  document.addEventListener('click', function() {
+    document.getElementById('profileDropdown').classList.remove('show');
+  });
+
+  // Cursor effect
+  const cur = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  if (cur && ring) {
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cur.style.left = mx + 'px'; cur.style.top = my + 'px'; });
+    (function animRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top = ry + 'px';
+      requestAnimationFrame(animRing);
+    })();
+    document.querySelectorAll('a, button, .forum-card').forEach(el => {
+      el.addEventListener('mouseenter', () => { cur.style.width = '20px'; cur.style.height = '20px'; ring.style.width = '54px'; ring.style.height = '54px'; });
+      el.addEventListener('mouseleave', () => { cur.style.width = '12px'; cur.style.height = '12px'; ring.style.width = '36px'; ring.style.height = '36px'; });
+    });
+  }
+</script>
+</body>
+</html>

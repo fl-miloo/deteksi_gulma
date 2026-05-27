@@ -1,0 +1,247 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Manajemen Komentar - Gulmaify Admin{% endblock %}
+{% block page_name %}Manajemen Komentar{% endblock %}
+
+{% block head %}
+<style>
+  /* Latar konten gelap, konsisten dengan dashboard & master gulma */
+  .content {
+    background: #0d2214;
+  }
+
+  /* Kartu komentar dengan latar krem semi-transparan */
+  .komentar-card {
+    background: rgba(255, 250, 240, 0.95);
+    border-radius: 24px;
+    padding: 20px;
+    border: 1px solid rgba(83, 123, 47, 0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  /* Tabel responsif */
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .komentar-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .komentar-table th {
+    text-align: left;
+    padding: 14px 10px;
+    background: rgba(83, 123, 47, 0.2);
+    color: #143d22;
+    font-weight: 700;
+  }
+
+  .komentar-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(83, 123, 47, 0.2);
+    vertical-align: middle;
+  }
+
+  /* User avatar */
+  .user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #eb9c9c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #2D5128;
+  }
+
+  .user-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  /* Tombol hapus 3D (ukuran kecil) */
+  .btn-danger-sm {
+    background: #dc3545;
+    color: white;
+    border: 2px solid #8b0000;
+    border-radius: 30px;
+    box-shadow: #8b0000 3px 3px 0 0;
+    padding: 5px 14px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-danger-sm:hover {
+    background: #e04858;
+    transform: translateY(-1px);
+    box-shadow: #8b0000 3px 3px 0 0;
+  }
+
+  .btn-danger-sm:active {
+    transform: translate(2px, 2px);
+    box-shadow: #8b0000 1px 1px 0 0;
+  }
+
+  /* Link forum */
+  .forum-link {
+    color: #537B2F;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .forum-link:hover {
+    text-decoration: underline;
+    color: #2D5128;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #a0bba5;
+  }
+
+  /* Pagination styles */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .pagination a, .pagination .current-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    background: rgba(255,250,240,0.2);
+    color:  #8DA750;
+    border: 1px solid rgba(83,123,47,0.3);
+  }
+  .pagination a:hover {
+    background: #537B2F;
+    color: white;
+    transform: translateY(-2px);
+  }
+  .pagination .current-page {
+    background: #537B2F;
+    color: white;
+    border-color: #537B2F;
+    pointer-events: none;
+  }
+  .pagination .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    background: rgba(255,250,240,0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="komentar-card">
+  <div class="card-title" style="color: #142C14; border-bottom-color: rgba(83,123,47,0.2);">
+    Daftar Komentar
+  </div>
+  <div class="table-responsive">
+    <table class="komentar-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Forum</th>
+          <th>Komentar</th>
+          <th>Waktu</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for k in komentar %}
+        <tr>
+          <td>
+            <div class="user-cell">
+              {% if k.user_foto %}
+                <img src="{{ k.user_foto }}" class="user-avatar" style="object-fit:cover;">
+              {% else %}
+                <div class="user-avatar">{{ k.user_nama[0]|upper }}</div>
+              {% endif %}
+              <span>{{ k.user_nama }}</span>
+            </div>
+          </td>
+          <td>
+            <a href="{{ url_for('diskusi_detail', id_forum=k.id_forum) }}" target="_blank" class="forum-link">
+              {{ k.forum_judul|truncate(40) }}
+            </a>
+          </td>
+          <td>{{ k.isi_komentar|truncate(100) }}</td>
+          <td style="font-size:0.75rem;">{{ k.tgl_komentar.strftime('%d/%m/%Y %H:%M') if k.tgl_komentar else '-' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_hapus_komentar', id_komentar=k.id_komentar) }}" onsubmit="return confirm('Yakin ingin menghapus komentar ini?')">
+              <button type="submit" class="btn-danger-sm">Hapus</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-state">Tidak ada komentar.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="{{ url_for('admin_komentar', page=page-1) }}" class="prev-next">« Sebelumnya</a>
+    {% else %}
+      <span class="disabled prev-next">« Sebelumnya</span>
+    {% endif %}
+
+    {% set start = [1, page-2]|max %}
+    {% set end = [total_pages, page+2]|min %}
+    {% if start > 1 %}
+      <a href="{{ url_for('admin_komentar', page=1) }}">1</a>
+      {% if start > 2 %}<span class="dots">...</span>{% endif %}
+    {% endif %}
+
+    {% for p in range(start, end+1) %}
+      {% if p == page %}
+        <span class="current-page">{{ p }}</span>
+      {% else %}
+        <a href="{{ url_for('admin_komentar', page=p) }}">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if end < total_pages %}
+      {% if end < total_pages-1 %}<span class="dots">...</span>{% endif %}
+      <a href="{{ url_for('admin_komentar', page=total_pages) }}">{{ total_pages }}</a>
+    {% endif %}
+
+    {% if page < total_pages %}
+      <a href="{{ url_for('admin_komentar', page=page+1) }}" class="prev-next">Selanjutnya »</a>
+    {% else %}
+      <span class="disabled prev-next">Selanjutnya »</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

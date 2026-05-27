@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gulmaify — AI Weed Identifier</title>
+
+    <!-- Font natural / farm style -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;0,900;1,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            /* Gradasi hijau natural yang hangat */
+            background: linear-gradient(135deg,#142C14  0%,rgba(255, 250, 240, 0.063) 25%,#142C14 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Instrument Sans', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* decorative subtle leaves */
+        body::before {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: -80px;
+            width: 280px;
+            height: 280px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='white' opacity='0.08' d='M50,10 C70,10 90,30 90,50 C90,70 70,90 50,90 C30,90 10,70 10,50 C10,30 30,10 50,10z'/%3E%3C/svg%3E") no-repeat center/contain;
+            pointer-events: none;
+        }
+        body::after {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='white' opacity='0.08' d='M50,10 C70,10 90,30 90,50 C90,70 70,90 50,90 C30,90 10,70 10,50 C10,30 30,10 50,10z'/%3E%3C/svg%3E") no-repeat center/contain;
+            transform: rotate(45deg);
+            pointer-events: none;
+        }
+
+        .splash-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;  /* Jarak antar elemen: logo, teks, loader */
+            animation: fadeInUp 0.7s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 10;
+            padding: 20px;
+        }
+
+        /* Logo area dengan efek pulse */
+        .logo-circle {
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 250, 240, 0.12);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: softPulse 2s infinite ease;
+            transition: all 0.3s;
+        }
+         .logo-wrap{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            gap:12px;
+            animation:fadeIn .6s ease
+        }
+        
+        /* Ukuran gambar logo */
+         .logo-circle img{
+            width:150%;
+            height:180%;
+            object-fit:contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+             transform: translateX(-2px) translateY(5px);
+        }
+
+        /* Teks utama */
+        h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: #FFFAF0;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin: 0;
+        }
+        h1 span {
+            color: #E4EB9C;
+            font-style: italic;
+        }
+
+
+        /* Loader modern */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(228, 235, 156, 0.3);
+            border-top: 3px solid #E4EB9C;
+            border-radius: 50%;
+            animation: spin 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            box-shadow: 0 0 8px rgba(228, 235, 156, 0.3);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes softPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(228, 235, 156, 0.4), 0 10px 25px rgba(0,0,0,0.2);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 0 18px rgba(228, 235, 156, 0.1), 0 10px 25px rgba(0,0,0,0.2);
+                transform: scale(1.02);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive untuk HP */
+        @media (max-width: 520px) {
+            .logo-circle {
+                width: 120px;
+                height: 120px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+    
+            .loader {
+                width: 40px;
+                height: 40px;
+            }
+            .splash-container {
+                gap: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="splash-container">
+    <!-- Logo -->
+    <div class="logo-circle">
+        <img src="{{ url_for('static', filename='images/logo2.png') }}" alt="Logo Gulmaify">
+    </div>
+
+    <!-- Judul -->
+    <h1>Gulma<span>ify</span></h1>
+
+    <!-- Loader -->
+    <div class="loader"></div>
+</div>
+
+<script>
+    // Redirect ke halaman beranda setelah 2.2 detik
+    setTimeout(function() {
+        window.location.href = "/beranda";
+    }, 2200);
+</script>
+
+</body>
+</html>
